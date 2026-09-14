@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 120" width="100%" height="100%">
+  <style>
+    .sub { font-family: 'Montserrat', sans-serif; font-size: 11px; fill: #d49b35; letter-spacing: 6px; font-weight: 600; text-anchor: middle; text-transform: uppercase; }
+    .main { font-family: 'Playfair Display', serif; font-size: 52px; fill: #f4e8d3; font-style: italic; font-weight: 600; text-anchor: middle; }
+  </style>
+  <text x="150" y="28" class="sub">МУЖСКАЯ</text>
+  <text x="150" y="78" class="main">Корни</text>
+  <path d="M 195 82 C 220 85, 250 82, 265 72" stroke="#d49b35" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <text x="150" y="106" class="sub">ПАРИКМАХЕРСКАЯ</text>
+</svg>
