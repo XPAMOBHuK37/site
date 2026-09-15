@@ -5,26 +5,31 @@ export function StepService({ svcs, srv, setSrv, onNext }) {
   return (
     <div className="space-y-2">
       <h4 className="text-sm font-bold mb-2">1. Услуга</h4>
-      {svcs.map((item, i) => (
-        <div key={i} onClick={() => setSrv(item)} className={`p-3 rounded-xl border cursor-pointer flex justify-between ${srv?.t === item.t ? 'border-amber-500 bg-amber-500/10' : 'border-zinc-800 bg-zinc-950'}`}>
-          <span>{item.t}</span><span className="text-amber-400">{item.pr}</span>
-        </div>
-      ))}
-      <button disabled={!srv} onClick={onNext} className="w-full mt-3 bg-amber-500 disabled:opacity-50 text-zinc-950 font-bold p-3 rounded-xl">Далее</button>
+      {svcs.map((item, i) => {
+        const title = item.title || item.t || 'Услуга'
+        const price = item.price || item.pr || '1 500 ₽'
+        return (
+          <div key={item.id || i} onClick={() => setSrv(item)} className={`p-3 rounded-xl border cursor-pointer flex justify-between items-center transition ${srv?.title === title || srv?.t === title ? 'border-amber-500 bg-amber-500/20 text-white' : 'border-zinc-800 bg-zinc-950 text-zinc-300'}`}>
+            <span className="font-semibold text-sm">{title}</span><span className="text-amber-400 font-bold">{price}</span>
+          </div>
+        )
+      })}
+      <button disabled={!srv} onClick={onNext} className="w-full mt-3 bg-amber-500 disabled:opacity-50 text-zinc-950 font-bold p-3 rounded-xl cursor-pointer">Далее</button>
     </div>
   )
 }
 
 export function StepMaster({ masters, mst, setMst, onBack, onNext }) {
+  const masterNames = ['Любой мастер', ...(masters.map(m => typeof m === 'string' ? m : m.name))]
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 max-h-[300px] overflow-y-auto">
       <h4 className="text-sm font-bold mb-2">2. Мастер</h4>
-      {masters.map((m, i) => (
-        <div key={i} onClick={() => setMst(m)} className={`p-3 rounded-xl border cursor-pointer ${mst === m ? 'border-amber-500 bg-amber-500/10' : 'border-zinc-800 bg-zinc-950'}`}>{m}</div>
+      {masterNames.map((m, i) => (
+        <div key={i} onClick={() => setMst(m)} className={`p-3 rounded-xl border cursor-pointer transition ${mst === m ? 'border-amber-500 bg-amber-500/20 text-white font-bold' : 'border-zinc-800 bg-zinc-950 text-zinc-300'}`}>👤 {m}</div>
       ))}
-      <div className="flex space-x-2 mt-3">
-        <button onClick={onBack} className="bg-zinc-800 p-3 rounded-xl px-4"><ArrowLeft className="w-4 h-4" /></button>
-        <button disabled={!mst} onClick={onNext} className="flex-1 bg-amber-500 disabled:opacity-50 text-zinc-950 font-bold p-3 rounded-xl">Далее</button>
+      <div className="flex space-x-2 mt-3 pt-2 border-t border-zinc-800">
+        <button onClick={onBack} className="bg-zinc-800 p-3 rounded-xl px-4 cursor-pointer hover:bg-zinc-700"><ArrowLeft className="w-4 h-4" /></button>
+        <button disabled={!mst} onClick={onNext} className="flex-1 bg-amber-500 disabled:opacity-50 text-zinc-950 font-bold p-3 rounded-xl cursor-pointer">Далее</button>
       </div>
     </div>
   )

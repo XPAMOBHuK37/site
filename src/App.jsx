@@ -10,10 +10,21 @@ export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showBooking, setShowBooking] = useState(false)
+  const [bookingData, setBookingData] = useState(null)
   const [showAuth, setShowAuth] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
 
   useEffect(() => {
+    const masterSessionStr = localStorage.getItem('korni_master_session')
+    if (masterSessionStr) {
+      try {
+        const mObj = JSON.parse(masterSessionStr)
+        setSession({ user: { email: mObj.email || mObj.phone, master: mObj } })
+        setLoading(false)
+        return
+      } catch (e) {}
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       setLoading(false)
@@ -36,16 +47,17 @@ export default function App() {
   return (
     <div className="bg-zinc-950 text-zinc-100 min-h-screen font-sans">
       <Navbar
-        onOpenBooking={() => setShowBooking(true)}
+        onOpenBooking={(data = null) => { setBookingData(data); setShowBooking(true); }}
         onOpenAuth={() => setShowAuth(true)}
         session={session}
         onOpenDashboard={() => setShowDashboard(true)}
       />
 
-      <Landing onOpenBooking={() => setShowBooking(true)} />
+      <Landing onOpenBooking={(data = null) => { setBookingData(data); setShowBooking(true); }} />
 
       {showBooking && (
         <BookingModal
+          initialData={bookingData}
           onClose={() => setShowBooking(false)}
           onSuccess={() => {}}
         />

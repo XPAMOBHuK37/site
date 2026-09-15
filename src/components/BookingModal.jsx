@@ -3,29 +3,107 @@ import { X, CheckCircle, Scissors } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import { StepService, StepMaster, StepTime, StepContacts, StepConfirm } from './BookingSteps'
 
-export default function BookingModal({ onClose, onSuccess }) {
-  const [s, setS] = useState(1)
+export default function BookingModal({ onClose, onSuccess, initialData }) {
+  const [srv, setSrv] = useState(initialData?.service || null)
+  const [mst, setMst] = useState(initialData?.master || null)
+  const [s, setS] = useState(initialData?.service ? 2 : 1)
   const [n, setN] = useState('')
   const [p, setP] = useState('')
-  const [srv, setSrv] = useState(null)
-  const [mst, setMst] = useState(null)
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-  const [time, setTime] = useState('12:00')
+  const [time, setTime] = useState('10:00')
   const [load, setLoad] = useState(false)
   const [ok, setOk] = useState(false)
 
-  const svcs = [{ t: 'Стрижка', pr: '1500₽' }, { t: 'Борода', pr: '1000₽' }, { t: 'Комплекс', pr: '2500₽' }]
-  const masters = ['Любой мастер', 'Алексей', 'Дмитрий', 'Максим']
-  const slots = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00']
+  const [svcs, setSvcs] = useState([
+    { title: 'Мужская стрижка', price: '1 500 ₽' },
+    { title: 'Оформление бороды', price: '1 000 ₽' },
+    { title: 'Комплекс', price: '2 200 ₽' }
+  ])
+  const [masters, setMasters] = useState([
+    { name: 'Алексей Смирнов' },
+    { name: 'Дмитрий Иванов' },
+    { name: 'Максим Петров' }
+  ])
+
+  React.useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    let loadedServices = []
+    let loadedMasters = []
+
+    try {
+      const localS = localStorage.getItem('korni_local_services')
+      if (localS) loadedServices = JSON.parse(localS)
+    } catch (e) {}
+
+    try {
+      const localM = localStorage.getItem('korni_local_masters')
+      if (localM) loadedMasters = JSON.parse(localM)
+    } catch (e) {}
+
+    if (loadedServices.length === 0) {
+      try {
+        const { data } = await supabase.from('services').select('*')
+        if (data && data.length > 0) loadedServices = data
+      } catch (e) {}
+    }
+
+    if (loadedMasters.length === 0) {
+      try {
+        const { data } = await supabase.from('masters').select('*')
+        if (data && data.length > 0) loadedMasters = data
+      } catch (e) {}
+    }
+
+    if (loadedServices.length > 0) setSvcs(loadedServices)
+    if (loadedMasters.length > 0) setMasters(loadedMasters)
+  }
+
+  const slots = []
+  for (let h = 8; h <= 23; h++) {
+    slots.push(`${String(h).padStart(2, '0')}:00`)
+    slots.push(`${String(h).padStart(2, '0')}:30`)
+  }
 
   const sub = async (e) => {
     e.preventDefault(); setLoad(true)
-    try { await supabase.from('appointments').insert([{ client_name: n, client_phone: p, date, start_time: time, status: 'Подтверждена' }]) } catch (e) {}
+    const serviceTitle = srv?.title || srv?.t || 'Мужская стрижка'
+    const masterName = mst || 'Любой мастер'
+
+    try {
+      await supabase.from('appointments').insert([{
+        client_name: n,
+        client_phone: p,
+        date,
+        start_time: time,
+        service_title: serviceTitle,
+        master_name: masterName,
+        status: 'Подтверждена'
+      }])
+    } catch (e) {}
+
+    try {
+      const existing = JSON.parse(localStorage.getItem('korni_local_appointments') || '[]')
+      existing.unshift({
+        id: Date.now().toString(),
+        client_name: n,
+        client_phone: p,
+        date,
+        start_time: time,
+        service_title: serviceTitle,
+        master_name: masterName,
+        status: 'Подтверждена'
+      })
+      localStorage.setItem('korni_local_appointments', JSON.stringify(existing))
+    } catch (err) {}
+
     setLoad(false); setOk(true); if (onSuccess) onSuccess()
   }
 
   return (
-    <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-[9999]">
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md text-zinc-100 p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold flex items-center space-x-2"><Scissors className="w-4 h-4 text-amber-500" /><span>Запись ({s}/5)</span></h3>

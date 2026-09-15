@@ -18,6 +18,9 @@ create table if not exists public.masters (
   phone text,
   bio text,
   photo_url text,
+  email text,
+  password text,
+  is_admin boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -42,12 +45,17 @@ alter table public.appointments enable row level security;
 -- Public read policies
 create policy "Services viewable by everyone" on public.services for select using (true);
 create policy "Services manageable by authenticated users" on public.services for all using (auth.role() = 'authenticated');
+create policy "Services insertable by everyone for setup" on public.services for insert with check (true);
+create policy "Services updatable by everyone for setup" on public.services for update using (true);
 
 create policy "Masters viewable by everyone" on public.masters for select using (true);
 create policy "Masters manageable by authenticated users" on public.masters for all using (auth.role() = 'authenticated');
+create policy "Masters insertable by everyone for setup" on public.masters for insert with check (true);
+create policy "Masters updatable by everyone for setup" on public.masters for update using (true);
 
 create policy "Appointments viewable by authenticated users" on public.appointments for select using (auth.role() = 'authenticated');
 create policy "Appointments insertable by everyone" on public.appointments for insert with check (true);
 create policy "Appointments manageable by authenticated users" on public.appointments for update using (auth.role() = 'authenticated');
 create policy "Appointments deletable by authenticated users" on public.appointments for delete using (auth.role() = 'authenticated');
+
 
