@@ -158,6 +158,15 @@ export default function Dashboard({ session, onClose }) {
   }
 
   const fetchServices = async () => {
+    try {
+      const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: false })
+      if (!error && data && data.length > 0) {
+        setServices(data)
+        localStorage.setItem('korni_local_services', JSON.stringify(data))
+        return
+      }
+    } catch (e) {}
+
     const local = localStorage.getItem('korni_local_services')
     if (local) {
       try {
@@ -169,15 +178,6 @@ export default function Dashboard({ session, onClose }) {
       } catch (err) {}
     }
 
-    try {
-      const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: false })
-      if (!error && data) {
-        setServices(data)
-        localStorage.setItem('korni_local_services', JSON.stringify(data))
-        return
-      }
-    } catch (e) {}
-
     const defaultServices = [
       { id: '1', title: 'Мужская стрижка', description: 'Классические и современные стрижки, мытье волос и укладка.', price: '1 500 ₽' },
       { id: '2', title: 'Оформление бороды', description: 'Моделирование формы бороды, бритье опасной бритвой.', price: '1 000 ₽' },
@@ -188,6 +188,15 @@ export default function Dashboard({ session, onClose }) {
   }
 
   const fetchDbMasters = async () => {
+    try {
+      const { data, error } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
+      if (!error && data && data.length > 0) {
+        setDbMasters(data)
+        localStorage.setItem('korni_local_masters', JSON.stringify(data))
+        return
+      }
+    } catch (e) {}
+
     const local = localStorage.getItem('korni_local_masters')
     if (local) {
       try {
@@ -198,15 +207,6 @@ export default function Dashboard({ session, onClose }) {
         }
       } catch (err) {}
     }
-
-    try {
-      const { data, error } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
-      if (!error && data) {
-        setDbMasters(data)
-        localStorage.setItem('korni_local_masters', JSON.stringify(data))
-        return
-      }
-    } catch (e) {}
 
     const defaultMasters = [
       { id: '1', name: 'Алексей Смирнов', phone: '+7 (999) 111-22-33', bio: 'Старший барбер со стажем более 10 лет. Мастер классических стрижек.', photo_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80', email: 'alex@korni37.ru', is_admin: true },
@@ -573,7 +573,7 @@ export default function Dashboard({ session, onClose }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {dbMasters.map(m => (
                 <div key={m.id} className="bg-zinc-950 border border-zinc-800 p-6 rounded-xl flex flex-col items-center text-center space-y-4">
-                  <img src={m.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'} alt={m.name} className="w-24 h-24 rounded-full object-cover border border-amber-500/50" />
+                  <img src={m.photo_url || '/logo.svg'} onError={(e) => { e.target.src = '/logo.svg'; }} alt={m.name} className="w-24 h-24 rounded-full object-cover border border-amber-500/50" />
                   <div>
                     <h3 className="font-bold text-lg text-amber-400">{m.name} {m.is_admin && <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded ml-1">Админ</span>}</h3>
                     <p className="text-xs text-zinc-400 mt-1">

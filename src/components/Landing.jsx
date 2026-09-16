@@ -19,30 +19,41 @@ export default function Landing({ onOpenBooking }) {
   }, [])
 
   const fetchData = async () => {
-    const localS = localStorage.getItem('korni_local_services')
-    if (localS) {
-      try { setServices(JSON.parse(localS)) } catch (e) {}
-    }
-    const localM = localStorage.getItem('korni_local_masters')
-    if (localM) {
-      try { setMasters(JSON.parse(localM)) } catch (e) {}
-    }
-
     try {
       const { data: sData, error: sErr } = await supabase.from('services').select('*')
       if (!sErr && sData && sData.length > 0) {
         setServices(sData)
         localStorage.setItem('korni_local_services', JSON.stringify(sData))
+      } else {
+        const localS = localStorage.getItem('korni_local_services')
+        if (localS) {
+          try { setServices(JSON.parse(localS)) } catch (e) {}
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      const localS = localStorage.getItem('korni_local_services')
+      if (localS) {
+        try { setServices(JSON.parse(localS)) } catch (e) {}
+      }
+    }
 
     try {
       const { data: mData, error: mErr } = await supabase.from('masters').select('*')
       if (!mErr && mData && mData.length > 0) {
         setMasters(mData)
         localStorage.setItem('korni_local_masters', JSON.stringify(mData))
+      } else {
+        const localM = localStorage.getItem('korni_local_masters')
+        if (localM) {
+          try { setMasters(JSON.parse(localM)) } catch (e) {}
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      const localM = localStorage.getItem('korni_local_masters')
+      if (localM) {
+        try { setMasters(JSON.parse(localM)) } catch (e) {}
+      }
+    }
   }
 
   const handleOpen = () => {
@@ -177,7 +188,8 @@ export default function Landing({ onOpenBooking }) {
             {masters.map((m, i) => (
               <div key={m.id || i} className="bg-[#1c1613] p-8 border border-[#3a2e26] shadow-lg hover:border-[#d49b35] transition flex flex-col items-center text-center w-full max-w-sm">
                 <img 
-                  src={m.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'} 
+                  src={m.photo_url || '/logo.svg'} 
+                  onError={(e) => { e.target.src = '/logo.svg'; }}
                   alt={m.name} 
                   className="w-32 h-32 rounded-full object-cover border-2 border-[#d49b35] shadow-md mb-6" 
                 />
