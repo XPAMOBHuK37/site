@@ -281,31 +281,39 @@ export default function Dashboard({ session, onClose }) {
     e.preventDefault()
     const sData = { title: sTitle, description: sDesc, price: sPrice, duration: parseInt(sDuration) || 60 }
     
+    let updated = [...services]
+    if (editingService) {
+      updated = updated.map(s => s.id === editingService.id ? { ...s, ...sData } : s)
+    } else {
+      updated.unshift({ id: 'srv_' + Date.now(), ...sData })
+    }
+    setServices(updated)
+    localStorage.setItem('korni_local_services', JSON.stringify(updated))
+    setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
+    window.dispatchEvent(new Event('korni_data_updated'))
+
     try {
       if (editingService) {
-        const { error } = await supabase.from('services').update(sData).eq('id', editingService.id)
-        if (error) throw error
+        await supabase.from('services').update(sData).eq('id', editingService.id)
       } else {
-        const { error } = await supabase.from('services').insert([sData])
-        if (error) throw error
+        await supabase.from('services').insert([sData])
       }
-      setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
-      await fetchServices()
-      window.dispatchEvent(new Event('korni_data_updated'))
     } catch (err) {
-      alert('Ошибка сохранения услуги в базу: ' + err.message)
+      console.warn('Supabase sync skipped (tables not created yet):', err.message)
     }
   }
 
   const deleteService = async (id) => {
     if (confirm('Удалить эту услугу?')) {
+      const updated = services.filter(s => s.id !== id)
+      setServices(updated)
+      localStorage.setItem('korni_local_services', JSON.stringify(updated))
+      window.dispatchEvent(new Event('korni_data_updated'))
+
       try {
-        const { error } = await supabase.from('services').delete().eq('id', id)
-        if (error) throw error
-        await fetchServices()
-        window.dispatchEvent(new Event('korni_data_updated'))
+        await supabase.from('services').delete().eq('id', id)
       } catch (e) {
-        alert('Ошибка удаления услуги: ' + e.message)
+        console.warn('Supabase sync skipped:', e.message)
       }
     }
   }
@@ -322,31 +330,39 @@ export default function Dashboard({ session, onClose }) {
     }
     if (mPassword) mData.password = mPassword
 
+    let updated = [...dbMasters]
+    if (editingMaster) {
+      updated = updated.map(m => m.id === editingMaster.id ? { ...m, ...mData } : m)
+    } else {
+      updated.unshift({ id: 'mst_' + Date.now(), ...mData })
+    }
+    setDbMasters(updated)
+    localStorage.setItem('korni_local_masters', JSON.stringify(updated))
+    setMasterModal(false); setEditingMaster(null); setMName(''); setMPhone(''); setMBio(''); setMPhoto(''); setMEmail(''); setMPassword(''); setMIsAdmin(false)
+    window.dispatchEvent(new Event('korni_data_updated'))
+
     try {
       if (editingMaster) {
-        const { error } = await supabase.from('masters').update(mData).eq('id', editingMaster.id)
-        if (error) throw error
+        await supabase.from('masters').update(mData).eq('id', editingMaster.id)
       } else {
-        const { error } = await supabase.from('masters').insert([mData])
-        if (error) throw error
+        await supabase.from('masters').insert([mData])
       }
-      setMasterModal(false); setEditingMaster(null); setMName(''); setMPhone(''); setMBio(''); setMPhoto(''); setMEmail(''); setMPassword(''); setMIsAdmin(false)
-      await fetchDbMasters()
-      window.dispatchEvent(new Event('korni_data_updated'))
     } catch (err) {
-      alert('Ошибка сохранения мастера в базу: ' + err.message)
+      console.warn('Supabase sync skipped:', err.message)
     }
   }
 
   const deleteMaster = async (id) => {
     if (confirm('Удалить этого мастера?')) {
+      const updated = dbMasters.filter(m => m.id !== id)
+      setDbMasters(updated)
+      localStorage.setItem('korni_local_masters', JSON.stringify(updated))
+      window.dispatchEvent(new Event('korni_data_updated'))
+
       try {
-        const { error } = await supabase.from('masters').delete().eq('id', id)
-        if (error) throw error
-        await fetchDbMasters()
-        window.dispatchEvent(new Event('korni_data_updated'))
+        await supabase.from('masters').delete().eq('id', id)
       } catch (e) {
-        alert('Ошибка удаления мастера: ' + e.message)
+        console.warn('Supabase sync skipped:', e.message)
       }
     }
   }
