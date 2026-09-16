@@ -299,6 +299,13 @@ export default function Dashboard({ session, onClose }) {
     e.preventDefault()
     const sData = { title: sTitle, description: sDesc, price: sPrice, duration: parseInt(sDuration) || 60 }
     
+    if (editingService) {
+      const isUuid = editingService.id && editingService.id.length > 10 && !editingService.id.startsWith('srv_')
+      if (isUuid) {
+        sData.id = editingService.id
+      }
+    }
+
     let updated = [...services]
     if (editingService) {
       updated = updated.map(s => s.id === editingService.id ? { ...s, ...sData } : s)
@@ -312,15 +319,8 @@ export default function Dashboard({ session, onClose }) {
     try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
     try {
-      if (editingService) {
-        const isUuid = editingService.id && editingService.id.length > 10 && !editingService.id.startsWith('srv_')
-        const query = isUuid
-          ? supabase.from('services').update(sData).eq('id', editingService.id)
-          : supabase.from('services').update(sData).eq('title', editingService.title)
-        await query
-      } else {
-        await supabase.from('services').insert([sData])
-      }
+      await supabase.from('services').upsert(sData)
+      fetchServices()
     } catch (err) {
       console.warn('Supabase sync background notice:', err.message)
     }
@@ -361,6 +361,13 @@ export default function Dashboard({ session, onClose }) {
     }
     if (mPassword) mData.password = mPassword
 
+    if (editingMaster) {
+      const isUuid = editingMaster.id && editingMaster.id.length > 10 && !editingMaster.id.startsWith('mst_')
+      if (isUuid) {
+        mData.id = editingMaster.id
+      }
+    }
+
     let updated = [...dbMasters]
     if (editingMaster) {
       updated = updated.map(m => m.id === editingMaster.id ? { ...m, ...mData } : m)
@@ -374,15 +381,8 @@ export default function Dashboard({ session, onClose }) {
     try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
     try {
-      if (editingMaster) {
-        const isUuid = editingMaster.id && editingMaster.id.length > 10 && !editingMaster.id.startsWith('mst_')
-        const query = isUuid
-          ? supabase.from('masters').update(mData).eq('id', editingMaster.id)
-          : supabase.from('masters').update(mData).eq('name', editingMaster.name)
-        await query
-      } else {
-        await supabase.from('masters').insert([mData])
-      }
+      await supabase.from('masters').upsert(mData)
+      fetchDbMasters()
     } catch (err) {
       console.warn('Supabase sync background notice:', err.message)
     }
