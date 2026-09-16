@@ -170,31 +170,22 @@ export default function Dashboard({ session, onClose }) {
       { title: 'Комплекс', description: 'Стрижка + оформление бороды для безупречного полного образа.', price: '2 200 ₽', duration: 90 }
     ]
 
-    const rawDeleted = JSON.parse(localStorage.getItem('korni_deleted_services') || '[]')
-    const deletedList = rawDeleted.filter(x => typeof x === 'string' && x.length > 2)
-
     try {
       const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: false })
-      if (!error && data && data.length > 0) {
-        const filtered = data.filter(s => s && s.title && !deletedList.includes(s.id) && !deletedList.includes(s.title))
-        const finalServices = filtered.length > 0 ? filtered : defaultServices
-        setServices(finalServices)
-        localStorage.setItem('korni_local_services', JSON.stringify(finalServices))
-        return
-      }
-    } catch (e) {}
-
-    const local = localStorage.getItem('korni_local_services')
-    if (local) {
-      try { 
-        const parsed = JSON.parse(local).filter(s => s && s.title && !deletedList.includes(s.id) && !deletedList.includes(s.title))
-        if (parsed.length > 0) {
-          setServices(parsed)
-          return
+      if (!error && data) {
+        if (data.length > 0) {
+          setServices(data)
+        } else {
+          for (const s of defaultServices) {
+            await supabase.from('services').insert([s])
+          }
+          const { data: newData } = await supabase.from('services').select('*').order('created_at', { ascending: false })
+          setServices(newData || defaultServices)
         }
-      } catch (e) {}
+      }
+    } catch (e) {
+      setServices(defaultServices)
     }
-    setServices(defaultServices)
   }
 
   const fetchDbMasters = async () => {
@@ -204,31 +195,22 @@ export default function Dashboard({ session, onClose }) {
       { name: 'Максим Петров', phone: '+7 (999) 333-44-55', bio: 'Мастер современных текстурных стрижек и стильных укладок.', photo_url: '/logo.svg', email: 'maxim@korni37.ru', is_admin: false }
     ]
 
-    const rawDeleted = JSON.parse(localStorage.getItem('korni_deleted_masters') || '[]')
-    const deletedList = rawDeleted.filter(x => typeof x === 'string' && x.length > 2)
-
     try {
       const { data, error } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
-      if (!error && data && data.length > 0) {
-        const filtered = data.filter(m => m && m.name && !deletedList.includes(m.id) && !deletedList.includes(m.name))
-        const finalMasters = filtered.length > 0 ? filtered : defaultMasters
-        setDbMasters(finalMasters)
-        localStorage.setItem('korni_local_masters', JSON.stringify(finalMasters))
-        return
-      }
-    } catch (e) {}
-
-    const local = localStorage.getItem('korni_local_masters')
-    if (local) {
-      try { 
-        const parsed = JSON.parse(local).filter(m => m && m.name && !deletedList.includes(m.id) && !deletedList.includes(m.name))
-        if (parsed.length > 0) {
-          setDbMasters(parsed)
-          return
+      if (!error && data) {
+        if (data.length > 0) {
+          setDbMasters(data)
+        } else {
+          for (const m of defaultMasters) {
+            await supabase.from('masters').insert([m])
+          }
+          const { data: newData } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
+          setDbMasters(newData || defaultMasters)
         }
-      } catch (e) {}
+      }
+    } catch (e) {
+      setDbMasters(defaultMasters)
     }
-    setDbMasters(defaultMasters)
   }
 
   const createAppt = async (e) => {
@@ -295,63 +277,30 @@ export default function Dashboard({ session, onClose }) {
     e.preventDefault()
     const sData = { title: sTitle, description: sDesc, price: sPrice, duration: parseInt(sDuration) || 60 }
     
-    if (editingService) {
-      const isUuid = editingService.id && editingService.id.length > 10 && !editingService.id.startsWith('srv_')
-      if (isUuid) {
-        sData.id = editingService.id
-      }
+    if (editingService && editingService.id && !editingService.id.startsWith('srv_')) {
+      sData.id = editingService.id
     }
-
-    let updated = [...services]
-    if (editingService) {
-      updated = updated.map(s => s.id === editingService.id ? { ...s, ...sData } : s)
-    } else {
-      updated.unshift({ id: 'srv_' + Date.now(), ...sData })
-    }
-    setServices(updated)
-    localStorage.setItem('korni_local_services', JSON.stringify(updated))
-    setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
-    window.dispatchEvent(new Event('korni_data_updated'))
-    try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
     try {
       await supabase.from('services').upsert(sData)
-      fetchServices()
+      setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
+      await fetchServices()
+      window.dispatchEvent(new Event('korni_data_updated'))
+      try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
     } catch (err) {
-      console.warn('Supabase sync background notice:', err.message)
+      alert('Ошибка сохранения услуги: ' + err.message)
     }
   }
 
   const deleteService = async (id) => {
     if (confirm('Удалить эту услугу?')) {
-      const target = services.find(s => s.id === id)
-      const updated = services.filter(s => s.id !== id)
-      setServices(updated)
-      localStorage.setItem('korni_local_services', JSON.stringify(updated))
-
-      const deletedList = JSON.parse(localStorage.getItem('korni_deleted_services') || '[]')
-      if (target) {
-        if (target.id) deletedList.push(target.id)
-        if (target.title) deletedList.push(target.title)
-      }
-      localStorage.setItem('korni_deleted_services', JSON.stringify(deletedList))
-
-      window.dispatchEvent(new Event('korni_data_updated'))
-      try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
-
       try {
-        if (target) {
-          const isUuid = target.id && target.id.length > 10 && !target.id.startsWith('srv_')
-          if (isUuid) {
-            await supabase.from('services').delete().eq('id', target.id)
-          }
-          if (target.title) {
-            await supabase.from('services').delete().eq('title', target.title)
-          }
-          fetchServices()
-        }
-      } catch (e) {
-        console.warn('Supabase sync background notice:', e.message)
+        await supabase.from('services').delete().eq('id', id)
+        await fetchServices()
+        window.dispatchEvent(new Event('korni_data_updated'))
+        try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
+      } catch (err) {
+        alert('Ошибка удаления услуги: ' + err.message)
       }
     }
   }
@@ -368,63 +317,30 @@ export default function Dashboard({ session, onClose }) {
     }
     if (mPassword) mData.password = mPassword
 
-    if (editingMaster) {
-      const isUuid = editingMaster.id && editingMaster.id.length > 10 && !editingMaster.id.startsWith('mst_')
-      if (isUuid) {
-        mData.id = editingMaster.id
-      }
+    if (editingMaster && editingMaster.id && !editingMaster.id.startsWith('mst_')) {
+      mData.id = editingMaster.id
     }
-
-    let updated = [...dbMasters]
-    if (editingMaster) {
-      updated = updated.map(m => m.id === editingMaster.id ? { ...m, ...mData } : m)
-    } else {
-      updated.unshift({ id: 'mst_' + Date.now(), ...mData })
-    }
-    setDbMasters(updated)
-    localStorage.setItem('korni_local_masters', JSON.stringify(updated))
-    setMasterModal(false); setEditingMaster(null); setMName(''); setMPhone(''); setMBio(''); setMPhoto(''); setMEmail(''); setMPassword(''); setMIsAdmin(false)
-    window.dispatchEvent(new Event('korni_data_updated'))
-    try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
     try {
       await supabase.from('masters').upsert(mData)
-      fetchDbMasters()
+      setMasterModal(false); setEditingMaster(null); setMName(''); setMPhone(''); setMBio(''); setMPhoto(''); setMEmail(''); setMPassword(''); setMIsAdmin(false)
+      await fetchDbMasters()
+      window.dispatchEvent(new Event('korni_data_updated'))
+      try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
     } catch (err) {
-      console.warn('Supabase sync background notice:', err.message)
+      alert('Ошибка сохранения мастера: ' + err.message)
     }
   }
 
   const deleteMaster = async (id) => {
     if (confirm('Удалить этого мастера?')) {
-      const target = dbMasters.find(m => m.id === id)
-      const updated = dbMasters.filter(m => m.id !== id)
-      setDbMasters(updated)
-      localStorage.setItem('korni_local_masters', JSON.stringify(updated))
-
-      const deletedList = JSON.parse(localStorage.getItem('korni_deleted_masters') || '[]')
-      if (target) {
-        if (target.id) deletedList.push(target.id)
-        if (target.name) deletedList.push(target.name)
-      }
-      localStorage.setItem('korni_deleted_masters', JSON.stringify(deletedList))
-
-      window.dispatchEvent(new Event('korni_data_updated'))
-      try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
-
       try {
-        if (target) {
-          const isUuid = target.id && target.id.length > 10 && !target.id.startsWith('mst_')
-          if (isUuid) {
-            await supabase.from('masters').delete().eq('id', target.id)
-          }
-          if (target.name) {
-            await supabase.from('masters').delete().eq('name', target.name)
-          }
-          fetchDbMasters()
-        }
-      } catch (e) {
-        console.warn('Supabase sync background notice:', e.message)
+        await supabase.from('masters').delete().eq('id', id)
+        await fetchDbMasters()
+        window.dispatchEvent(new Event('korni_data_updated'))
+        try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
+      } catch (err) {
+        alert('Ошибка удаления мастера: ' + err.message)
       }
     }
   }
