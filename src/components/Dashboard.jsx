@@ -170,31 +170,26 @@ export default function Dashboard({ session, onClose }) {
       { title: 'Комплекс', description: 'Стрижка + оформление бороды для безупречного полного образа.', price: '2 200 ₽', duration: 90 }
     ]
 
+    const deletedList = JSON.parse(localStorage.getItem('korni_deleted_services') || '[]')
+
     if (!services.length) {
       const local = localStorage.getItem('korni_local_services')
       if (local) {
-        try { setServices(JSON.parse(local)) } catch (e) { setServices(defaultServices) }
+        try { 
+          const parsed = JSON.parse(local).filter(s => !deletedList.includes(s.id) && !deletedList.includes(s.title))
+          setServices(parsed) 
+        } catch (e) { setServices(defaultServices) }
       } else {
-        setServices(defaultServices)
+        setServices(defaultServices.filter(s => !deletedList.includes(s.id) && !deletedList.includes(s.title)))
       }
     }
 
     try {
       const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: false })
       if (!error && data) {
-        if (data.length > 0) {
-          setServices(data)
-          localStorage.setItem('korni_local_services', JSON.stringify(data))
-        } else {
-          for (const s of defaultServices) {
-            await supabase.from('services').insert([s])
-          }
-          const { data: newData } = await supabase.from('services').select('*').order('created_at', { ascending: false })
-          if (newData && newData.length > 0) {
-            setServices(newData)
-            localStorage.setItem('korni_local_services', JSON.stringify(newData))
-          }
-        }
+        const filtered = data.filter(s => !deletedList.includes(s.id) && !deletedList.includes(s.title))
+        setServices(filtered)
+        localStorage.setItem('korni_local_services', JSON.stringify(filtered))
       }
     } catch (e) {}
   }
@@ -206,31 +201,26 @@ export default function Dashboard({ session, onClose }) {
       { name: 'Максим Петров', phone: '+7 (999) 333-44-55', bio: 'Мастер современных текстурных стрижек и стильных укладок.', photo_url: '/logo.svg', email: 'maxim@korni37.ru', is_admin: false }
     ]
 
+    const deletedList = JSON.parse(localStorage.getItem('korni_deleted_masters') || '[]')
+
     if (!dbMasters.length) {
       const local = localStorage.getItem('korni_local_masters')
       if (local) {
-        try { setDbMasters(JSON.parse(local)) } catch (e) { setDbMasters(defaultMasters) }
+        try { 
+          const parsed = JSON.parse(local).filter(m => !deletedList.includes(m.id) && !deletedList.includes(m.name))
+          setDbMasters(parsed) 
+        } catch (e) { setDbMasters(defaultMasters) }
       } else {
-        setDbMasters(defaultMasters)
+        setDbMasters(defaultMasters.filter(m => !deletedList.includes(m.id) && !deletedList.includes(m.name)))
       }
     }
 
     try {
       const { data, error } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
       if (!error && data) {
-        if (data.length > 0) {
-          setDbMasters(data)
-          localStorage.setItem('korni_local_masters', JSON.stringify(data))
-        } else {
-          for (const m of defaultMasters) {
-            await supabase.from('masters').insert([m])
-          }
-          const { data: newData } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
-          if (newData && newData.length > 0) {
-            setDbMasters(newData)
-            localStorage.setItem('korni_local_masters', JSON.stringify(newData))
-          }
-        }
+        const filtered = data.filter(m => !deletedList.includes(m.id) && !deletedList.includes(m.name))
+        setDbMasters(filtered)
+        localStorage.setItem('korni_local_masters', JSON.stringify(filtered))
       }
     } catch (e) {}
   }
@@ -332,6 +322,14 @@ export default function Dashboard({ session, onClose }) {
       const updated = services.filter(s => s.id !== id)
       setServices(updated)
       localStorage.setItem('korni_local_services', JSON.stringify(updated))
+
+      const deletedList = JSON.parse(localStorage.getItem('korni_deleted_services') || '[]')
+      if (target) {
+        if (target.id) deletedList.push(target.id)
+        if (target.title) deletedList.push(target.title)
+      }
+      localStorage.setItem('korni_deleted_services', JSON.stringify(deletedList))
+
       window.dispatchEvent(new Event('korni_data_updated'))
       try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
@@ -397,6 +395,14 @@ export default function Dashboard({ session, onClose }) {
       const updated = dbMasters.filter(m => m.id !== id)
       setDbMasters(updated)
       localStorage.setItem('korni_local_masters', JSON.stringify(updated))
+
+      const deletedList = JSON.parse(localStorage.getItem('korni_deleted_masters') || '[]')
+      if (target) {
+        if (target.id) deletedList.push(target.id)
+        if (target.name) deletedList.push(target.name)
+      }
+      localStorage.setItem('korni_deleted_masters', JSON.stringify(deletedList))
+
       window.dispatchEvent(new Event('korni_data_updated'))
       try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
