@@ -16,44 +16,51 @@ export default function Landing({ onOpenBooking }) {
 
   useEffect(() => {
     fetchData()
+    const handleUpdate = () => fetchData()
+    window.addEventListener('korni_data_updated', handleUpdate)
+    window.addEventListener('storage', handleUpdate)
+    return () => {
+      window.removeEventListener('korni_data_updated', handleUpdate)
+      window.removeEventListener('storage', handleUpdate)
+    }
   }, [])
 
   const fetchData = async () => {
-    try {
-      const { data: sData, error: sErr } = await supabase.from('services').select('*')
-      if (!sErr && sData && sData.length > 0) {
-        setServices(sData)
-        localStorage.setItem('korni_local_services', JSON.stringify(sData))
-      } else {
-        const localS = localStorage.getItem('korni_local_services')
-        if (localS) {
-          try { setServices(JSON.parse(localS)) } catch (e) {}
+    const localS = localStorage.getItem('korni_local_services')
+    if (localS) {
+      try {
+        const parsed = JSON.parse(localS)
+        if (parsed && parsed.length > 0) {
+          setServices(parsed)
         }
-      }
-    } catch (e) {
-      const localS = localStorage.getItem('korni_local_services')
-      if (localS) {
-        try { setServices(JSON.parse(localS)) } catch (e) {}
-      }
+      } catch (e) {}
+    }
+
+    const localM = localStorage.getItem('korni_local_masters')
+    if (localM) {
+      try {
+        const parsed = JSON.parse(localM)
+        if (parsed && parsed.length > 0) {
+          setMasters(parsed)
+        }
+      } catch (e) {}
     }
 
     try {
+      const { data: sData, error: sErr } = await supabase.from('services').select('*')
+      if (!sErr && sData && sData.length > 0 && !localS) {
+        setServices(sData)
+        localStorage.setItem('korni_local_services', JSON.stringify(sData))
+      }
+    } catch (e) {}
+
+    try {
       const { data: mData, error: mErr } = await supabase.from('masters').select('*')
-      if (!mErr && mData && mData.length > 0) {
+      if (!mErr && mData && mData.length > 0 && !localM) {
         setMasters(mData)
         localStorage.setItem('korni_local_masters', JSON.stringify(mData))
-      } else {
-        const localM = localStorage.getItem('korni_local_masters')
-        if (localM) {
-          try { setMasters(JSON.parse(localM)) } catch (e) {}
-        }
       }
-    } catch (e) {
-      const localM = localStorage.getItem('korni_local_masters')
-      if (localM) {
-        try { setMasters(JSON.parse(localM)) } catch (e) {}
-      }
-    }
+    } catch (e) {}
   }
 
   const handleOpen = () => {
