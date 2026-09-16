@@ -170,28 +170,31 @@ export default function Dashboard({ session, onClose }) {
       { title: 'Комплекс', description: 'Стрижка + оформление бороды для безупречного полного образа.', price: '2 200 ₽', duration: 90 }
     ]
 
-    const deletedList = JSON.parse(localStorage.getItem('korni_deleted_services') || '[]')
-
-    if (!services.length) {
-      const local = localStorage.getItem('korni_local_services')
-      if (local) {
-        try { 
-          const parsed = JSON.parse(local).filter(s => !deletedList.includes(s.id) && !deletedList.includes(s.title))
-          setServices(parsed) 
-        } catch (e) { setServices(defaultServices) }
-      } else {
-        setServices(defaultServices.filter(s => !deletedList.includes(s.id) && !deletedList.includes(s.title)))
-      }
-    }
+    const rawDeleted = JSON.parse(localStorage.getItem('korni_deleted_services') || '[]')
+    const deletedList = rawDeleted.filter(x => typeof x === 'string' && x.length > 2)
 
     try {
       const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: false })
-      if (!error && data) {
-        const filtered = data.filter(s => !deletedList.includes(s.id) && !deletedList.includes(s.title))
-        setServices(filtered)
-        localStorage.setItem('korni_local_services', JSON.stringify(filtered))
+      if (!error && data && data.length > 0) {
+        const filtered = data.filter(s => s && s.title && !deletedList.includes(s.id) && !deletedList.includes(s.title))
+        const finalServices = filtered.length > 0 ? filtered : defaultServices
+        setServices(finalServices)
+        localStorage.setItem('korni_local_services', JSON.stringify(finalServices))
+        return
       }
     } catch (e) {}
+
+    const local = localStorage.getItem('korni_local_services')
+    if (local) {
+      try { 
+        const parsed = JSON.parse(local).filter(s => s && s.title && !deletedList.includes(s.id) && !deletedList.includes(s.title))
+        if (parsed.length > 0) {
+          setServices(parsed)
+          return
+        }
+      } catch (e) {}
+    }
+    setServices(defaultServices)
   }
 
   const fetchDbMasters = async () => {
@@ -201,28 +204,31 @@ export default function Dashboard({ session, onClose }) {
       { name: 'Максим Петров', phone: '+7 (999) 333-44-55', bio: 'Мастер современных текстурных стрижек и стильных укладок.', photo_url: '/logo.svg', email: 'maxim@korni37.ru', is_admin: false }
     ]
 
-    const deletedList = JSON.parse(localStorage.getItem('korni_deleted_masters') || '[]')
-
-    if (!dbMasters.length) {
-      const local = localStorage.getItem('korni_local_masters')
-      if (local) {
-        try { 
-          const parsed = JSON.parse(local).filter(m => !deletedList.includes(m.id) && !deletedList.includes(m.name))
-          setDbMasters(parsed) 
-        } catch (e) { setDbMasters(defaultMasters) }
-      } else {
-        setDbMasters(defaultMasters.filter(m => !deletedList.includes(m.id) && !deletedList.includes(m.name)))
-      }
-    }
+    const rawDeleted = JSON.parse(localStorage.getItem('korni_deleted_masters') || '[]')
+    const deletedList = rawDeleted.filter(x => typeof x === 'string' && x.length > 2)
 
     try {
       const { data, error } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
-      if (!error && data) {
-        const filtered = data.filter(m => !deletedList.includes(m.id) && !deletedList.includes(m.name))
-        setDbMasters(filtered)
-        localStorage.setItem('korni_local_masters', JSON.stringify(filtered))
+      if (!error && data && data.length > 0) {
+        const filtered = data.filter(m => m && m.name && !deletedList.includes(m.id) && !deletedList.includes(m.name))
+        const finalMasters = filtered.length > 0 ? filtered : defaultMasters
+        setDbMasters(finalMasters)
+        localStorage.setItem('korni_local_masters', JSON.stringify(finalMasters))
+        return
       }
     } catch (e) {}
+
+    const local = localStorage.getItem('korni_local_masters')
+    if (local) {
+      try { 
+        const parsed = JSON.parse(local).filter(m => m && m.name && !deletedList.includes(m.id) && !deletedList.includes(m.name))
+        if (parsed.length > 0) {
+          setDbMasters(parsed)
+          return
+        }
+      } catch (e) {}
+    }
+    setDbMasters(defaultMasters)
   }
 
   const createAppt = async (e) => {
