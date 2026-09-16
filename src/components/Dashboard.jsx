@@ -338,10 +338,13 @@ export default function Dashboard({ session, onClose }) {
       try {
         if (target) {
           const isUuid = target.id && target.id.length > 10 && !target.id.startsWith('srv_')
-          const query = isUuid
-            ? supabase.from('services').delete().eq('id', target.id)
-            : supabase.from('services').delete().eq('title', target.title)
-          await query
+          if (isUuid) {
+            await supabase.from('services').delete().eq('id', target.id)
+          }
+          if (target.title) {
+            await supabase.from('services').delete().eq('title', target.title)
+          }
+          fetchServices()
         }
       } catch (e) {
         console.warn('Supabase sync background notice:', e.message)
@@ -400,10 +403,13 @@ export default function Dashboard({ session, onClose }) {
       try {
         if (target) {
           const isUuid = target.id && target.id.length > 10 && !target.id.startsWith('mst_')
-          const query = isUuid
-            ? supabase.from('masters').delete().eq('id', target.id)
-            : supabase.from('masters').delete().eq('name', target.name)
-          await query
+          if (isUuid) {
+            await supabase.from('masters').delete().eq('id', target.id)
+          }
+          if (target.name) {
+            await supabase.from('masters').delete().eq('name', target.name)
+          }
+          fetchDbMasters()
         }
       } catch (e) {
         console.warn('Supabase sync background notice:', e.message)

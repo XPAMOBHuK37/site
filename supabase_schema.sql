@@ -48,11 +48,13 @@ create policy "Services viewable by everyone" on public.services for select usin
 create policy "Services manageable by authenticated users" on public.services for all using (auth.role() = 'authenticated');
 create policy "Services insertable by everyone for setup" on public.services for insert with check (true);
 create policy "Services updatable by everyone for setup" on public.services for update using (true);
+create policy "Services deletable by everyone for setup" on public.services for delete using (true);
 
 create policy "Masters viewable by everyone" on public.masters for select using (true);
 create policy "Masters manageable by authenticated users" on public.masters for all using (auth.role() = 'authenticated');
 create policy "Masters insertable by everyone for setup" on public.masters for insert with check (true);
 create policy "Masters updatable by everyone for setup" on public.masters for update using (true);
+create policy "Masters deletable by everyone for setup" on public.masters for delete using (true);
 
 create policy "Appointments viewable by authenticated users" on public.appointments for select using (auth.role() = 'authenticated');
 create policy "Appointments insertable by everyone" on public.appointments for insert with check (true);
