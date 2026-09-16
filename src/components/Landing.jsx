@@ -47,16 +47,16 @@ export default function Landing({ onOpenBooking }) {
     }
 
     try {
-      const { data: sData, error: sErr } = await supabase.from('services').select('*')
-      if (!sErr && sData && sData.length > 0 && !localS) {
+      const { data: sData, error: sErr } = await supabase.from('services').select('*').order('created_at', { ascending: false })
+      if (!sErr && sData) {
         setServices(sData)
         localStorage.setItem('korni_local_services', JSON.stringify(sData))
       }
     } catch (e) {}
 
     try {
-      const { data: mData, error: mErr } = await supabase.from('masters').select('*')
-      if (!mErr && mData && mData.length > 0 && !localM) {
+      const { data: mData, error: mErr } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
+      if (!mErr && mData) {
         setMasters(mData)
         localStorage.setItem('korni_local_masters', JSON.stringify(mData))
       }

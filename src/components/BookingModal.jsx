@@ -30,35 +30,37 @@ export default function BookingModal({ onClose, onSuccess, initialData }) {
   }, [])
 
   const fetchData = async () => {
-    let loadedServices = []
-    let loadedMasters = []
-
     try {
       const localS = localStorage.getItem('korni_local_services')
-      if (localS) loadedServices = JSON.parse(localS)
+      if (localS) {
+        const parsed = JSON.parse(localS)
+        if (parsed && parsed.length > 0) setSvcs(parsed)
+      }
     } catch (e) {}
 
     try {
       const localM = localStorage.getItem('korni_local_masters')
-      if (localM) loadedMasters = JSON.parse(localM)
+      if (localM) {
+        const parsed = JSON.parse(localM)
+        if (parsed && parsed.length > 0) setMasters(parsed)
+      }
     } catch (e) {}
 
-    if (loadedServices.length === 0) {
-      try {
-        const { data } = await supabase.from('services').select('*')
-        if (data && data.length > 0) loadedServices = data
-      } catch (e) {}
-    }
+    try {
+      const { data: sData } = await supabase.from('services').select('*').order('created_at', { ascending: false })
+      if (sData) {
+        setSvcs(sData)
+        localStorage.setItem('korni_local_services', JSON.stringify(sData))
+      }
+    } catch (e) {}
 
-    if (loadedMasters.length === 0) {
-      try {
-        const { data } = await supabase.from('masters').select('*')
-        if (data && data.length > 0) loadedMasters = data
-      } catch (e) {}
-    }
-
-    if (loadedServices.length > 0) setSvcs(loadedServices)
-    if (loadedMasters.length > 0) setMasters(loadedMasters)
+    try {
+      const { data: mData } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
+      if (mData) {
+        setMasters(mData)
+        localStorage.setItem('korni_local_masters', JSON.stringify(mData))
+      }
+    } catch (e) {}
   }
 
   const slots = []
