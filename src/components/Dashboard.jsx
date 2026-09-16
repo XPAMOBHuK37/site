@@ -159,70 +159,78 @@ export default function Dashboard({ session, onClose }) {
 
   const fetchServices = async () => {
     const defaultServices = [
-      { id: '1', title: 'Мужская стрижка', description: 'Классические и современные стрижки, мытье волос и укладка.', price: '1 500 ₽' },
-      { id: '2', title: 'Оформление бороды', description: 'Моделирование формы бороды, бритье опасной бритвой.', price: '1 000 ₽' },
-      { id: '3', title: 'Комплекс', description: 'Стрижка + оформление бороды для безупречного полного образа.', price: '2 200 ₽' }
+      { title: 'Мужская стрижка', description: 'Классические и современные стрижки, мытье волос и укладка.', price: '1 500 ₽', duration: 60 },
+      { title: 'Оформление бороды', description: 'Моделирование формы бороды, бритье опасной бритвой.', price: '1 000 ₽', duration: 60 },
+      { title: 'Комплекс', description: 'Стрижка + оформление бороды для безупречного полного образа.', price: '2 200 ₽', duration: 90 }
     ]
+
+    try {
+      const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: false })
+      if (!error && data) {
+        if (data.length > 0) {
+          setServices(data)
+          localStorage.setItem('korni_local_services', JSON.stringify(data))
+          return
+        } else {
+          for (const s of defaultServices) {
+            await supabase.from('services').insert([s])
+          }
+          const { data: newData } = await supabase.from('services').select('*').order('created_at', { ascending: false })
+          if (newData && newData.length > 0) {
+            setServices(newData)
+            localStorage.setItem('korni_local_services', JSON.stringify(newData))
+            return
+          }
+        }
+      }
+    } catch (e) {}
 
     const local = localStorage.getItem('korni_local_services')
     if (local) {
       try {
-        const parsed = JSON.parse(local)
-        if (parsed && parsed.length > 0) {
-          setServices(parsed)
-        } else {
-          setServices(defaultServices)
-          localStorage.setItem('korni_local_services', JSON.stringify(defaultServices))
-        }
-      } catch (err) {
-        setServices(defaultServices)
-      }
-    } else {
-      setServices(defaultServices)
-      localStorage.setItem('korni_local_services', JSON.stringify(defaultServices))
+        setServices(JSON.parse(local))
+        return
+      } catch (err) {}
     }
-
-    try {
-      const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: false })
-      if (!error && data && data.length > 0) {
-        setServices(data)
-        localStorage.setItem('korni_local_services', JSON.stringify(data))
-      }
-    } catch (e) {}
+    setServices(defaultServices)
   }
 
   const fetchDbMasters = async () => {
     const defaultMasters = [
-      { id: '1', name: 'Алексей Смирнов', phone: '+7 (999) 111-22-33', bio: 'Старший барбер со стажем более 10 лет. Мастер классических стрижек.', photo_url: '/logo.svg', email: 'alex@korni37.ru', is_admin: true },
-      { id: '2', name: 'Дмитрий Иванов', phone: '+7 (999) 222-33-44', bio: 'Эксперт по опасной бритве и моделированию бород.', photo_url: '/logo.svg', email: 'dmitry@korni37.ru', is_admin: false },
-      { id: '3', name: 'Максим Петров', phone: '+7 (999) 333-44-55', bio: 'Мастер современных текстурных стрижек и стильных укладок.', photo_url: '/logo.svg', email: 'maxim@korni37.ru', is_admin: false }
+      { name: 'Алексей Смирнов', phone: '+7 (999) 111-22-33', bio: 'Старший барбер со стажем более 10 лет. Мастер классических стрижек.', photo_url: '/logo.svg', email: 'alex@korni37.ru', is_admin: true },
+      { name: 'Дмитрий Иванов', phone: '+7 (999) 222-33-44', bio: 'Эксперт по опасной бритве и моделированию бород.', photo_url: '/logo.svg', email: 'dmitry@korni37.ru', is_admin: false },
+      { name: 'Максим Петров', phone: '+7 (999) 333-44-55', bio: 'Мастер современных текстурных стрижек и стильных укладок.', photo_url: '/logo.svg', email: 'maxim@korni37.ru', is_admin: false }
     ]
+
+    try {
+      const { data, error } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
+      if (!error && data) {
+        if (data.length > 0) {
+          setDbMasters(data)
+          localStorage.setItem('korni_local_masters', JSON.stringify(data))
+          return
+        } else {
+          for (const m of defaultMasters) {
+            await supabase.from('masters').insert([m])
+          }
+          const { data: newData } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
+          if (newData && newData.length > 0) {
+            setDbMasters(newData)
+            localStorage.setItem('korni_local_masters', JSON.stringify(newData))
+            return
+          }
+        }
+      }
+    } catch (e) {}
 
     const local = localStorage.getItem('korni_local_masters')
     if (local) {
       try {
-        const parsed = JSON.parse(local)
-        if (parsed && parsed.length > 0) {
-          setDbMasters(parsed)
-        } else {
-          setDbMasters(defaultMasters)
-          localStorage.setItem('korni_local_masters', JSON.stringify(defaultMasters))
-        }
-      } catch (err) {
-        setDbMasters(defaultMasters)
-      }
-    } else {
-      setDbMasters(defaultMasters)
-      localStorage.setItem('korni_local_masters', JSON.stringify(defaultMasters))
+        setDbMasters(JSON.parse(local))
+        return
+      } catch (err) {}
     }
-
-    try {
-      const { data, error } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
-      if (!error && data && data.length > 0) {
-        setDbMasters(data)
-        localStorage.setItem('korni_local_masters', JSON.stringify(data))
-      }
-    } catch (e) {}
+    setDbMasters(defaultMasters)
   }
 
   const createAppt = async (e) => {
