@@ -8,6 +8,7 @@ create table if not exists public.services (
   title text not null,
   description text,
   price text not null,
+  duration integer default 60,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
