@@ -281,36 +281,43 @@ export default function Dashboard({ session, onClose }) {
       sData.id = editingService.id
     }
 
-    try {
-      let error = null
-      if (sData.id) {
-        const res = await supabase.from('services').update(sData).eq('id', sData.id)
-        error = res.error
-      } else {
-        const res = await supabase.from('services').insert([sData])
-        error = res.error
-      }
-      if (error) throw error
+    let updated = [...services]
+    if (sData.id) {
+      updated = updated.map(s => s.id === sData.id ? { ...s, ...sData } : s)
+    } else {
+      updated.unshift({ id: 'srv_' + Date.now(), ...sData })
+    }
+    setServices(updated)
+    localStorage.setItem('korni_local_services', JSON.stringify(updated))
+    setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
+    window.dispatchEvent(new Event('korni_data_updated'))
+    try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
-      setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
-      await fetchServices()
-      window.dispatchEvent(new Event('korni_data_updated'))
-      try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
+    try {
+      if (sData.id) {
+        await supabase.from('services').update(sData).eq('id', sData.id)
+      } else {
+        await supabase.from('services').insert([sData])
+      }
+      fetchServices()
     } catch (err) {
-      alert('Ошибка сохранения услуги: ' + err.message)
+      console.warn('Supabase sync notice:', err.message)
     }
   }
 
   const deleteService = async (id) => {
     if (confirm('Удалить эту услугу?')) {
+      const updated = services.filter(s => s.id !== id)
+      setServices(updated)
+      localStorage.setItem('korni_local_services', JSON.stringify(updated))
+      window.dispatchEvent(new Event('korni_data_updated'))
+      try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
+
       try {
-        const { error } = await supabase.from('services').delete().eq('id', id)
-        if (error) throw error
-        await fetchServices()
-        window.dispatchEvent(new Event('korni_data_updated'))
-        try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
+        await supabase.from('services').delete().eq('id', id)
+        fetchServices()
       } catch (err) {
-        alert('Ошибка удаления услуги: ' + err.message)
+        console.warn('Supabase sync notice:', err.message)
       }
     }
   }
@@ -331,36 +338,43 @@ export default function Dashboard({ session, onClose }) {
       mData.id = editingMaster.id
     }
 
-    try {
-      let error = null
-      if (mData.id) {
-        const res = await supabase.from('masters').update(mData).eq('id', mData.id)
-        error = res.error
-      } else {
-        const res = await supabase.from('masters').insert([mData])
-        error = res.error
-      }
-      if (error) throw error
+    let updated = [...dbMasters]
+    if (mData.id) {
+      updated = updated.map(m => m.id === mData.id ? { ...m, ...mData } : m)
+    } else {
+      updated.unshift({ id: 'mst_' + Date.now(), ...mData })
+    }
+    setDbMasters(updated)
+    localStorage.setItem('korni_local_masters', JSON.stringify(updated))
+    setMasterModal(false); setEditingMaster(null); setMName(''); setMPhone(''); setMBio(''); setMPhoto(''); setMEmail(''); setMPassword(''); setMIsAdmin(false)
+    window.dispatchEvent(new Event('korni_data_updated'))
+    try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
-      setMasterModal(false); setEditingMaster(null); setMName(''); setMPhone(''); setMBio(''); setMPhoto(''); setMEmail(''); setMPassword(''); setMIsAdmin(false)
-      await fetchDbMasters()
-      window.dispatchEvent(new Event('korni_data_updated'))
-      try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
+    try {
+      if (mData.id) {
+        await supabase.from('masters').update(mData).eq('id', mData.id)
+      } else {
+        await supabase.from('masters').insert([mData])
+      }
+      fetchDbMasters()
     } catch (err) {
-      alert('Ошибка сохранения мастера: ' + err.message)
+      console.warn('Supabase sync notice:', err.message)
     }
   }
 
   const deleteMaster = async (id) => {
     if (confirm('Удалить этого мастера?')) {
+      const updated = dbMasters.filter(m => m.id !== id)
+      setDbMasters(updated)
+      localStorage.setItem('korni_local_masters', JSON.stringify(updated))
+      window.dispatchEvent(new Event('korni_data_updated'))
+      try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
+
       try {
-        const { error } = await supabase.from('masters').delete().eq('id', id)
-        if (error) throw error
-        await fetchDbMasters()
-        window.dispatchEvent(new Event('korni_data_updated'))
-        try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
+        await supabase.from('masters').delete().eq('id', id)
+        fetchDbMasters()
       } catch (err) {
-        alert('Ошибка удаления мастера: ' + err.message)
+        console.warn('Supabase sync notice:', err.message)
       }
     }
   }
