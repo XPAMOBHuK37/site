@@ -314,10 +314,13 @@ export default function Dashboard({ session, onClose }) {
       try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
       try {
-        await supabase.from('services').delete().eq('id', id)
+        const { error } = await supabase.from('services').delete().eq('id', id)
+        if (error) {
+          alert('Ошибка удаления в Supabase: ' + error.message)
+        }
         fetchServices()
       } catch (err) {
-        console.warn('Supabase sync notice:', err.message)
+        alert('Ошибка: ' + err.message)
       }
     }
   }
@@ -371,10 +374,13 @@ export default function Dashboard({ session, onClose }) {
       try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
       try {
-        await supabase.from('masters').delete().eq('id', id)
+        const { error } = await supabase.from('masters').delete().eq('id', id)
+        if (error) {
+          alert('Ошибка удаления в Supabase: ' + error.message)
+        }
         fetchDbMasters()
       } catch (err) {
-        console.warn('Supabase sync notice:', err.message)
+        alert('Ошибка: ' + err.message)
       }
     }
   }
