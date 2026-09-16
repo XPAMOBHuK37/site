@@ -302,24 +302,33 @@ export default function Dashboard({ session, onClose }) {
 
     try {
       if (editingService) {
-        await supabase.from('services').update(sData).eq('id', editingService.id)
+        const query = isNaN(editingService.id) && editingService.id.length > 10 
+          ? supabase.from('services').update(sData).eq('id', editingService.id)
+          : supabase.from('services').update(sData).eq('title', editingService.title)
+        await query
       } else {
         await supabase.from('services').insert([sData])
       }
     } catch (err) {
-      console.warn('Supabase sync skipped (tables not created yet):', err.message)
+      console.warn('Supabase sync skipped:', err.message)
     }
   }
 
   const deleteService = async (id) => {
     if (confirm('Удалить эту услугу?')) {
+      const target = services.find(s => s.id === id)
       const updated = services.filter(s => s.id !== id)
       setServices(updated)
       localStorage.setItem('korni_local_services', JSON.stringify(updated))
       window.dispatchEvent(new Event('korni_data_updated'))
 
       try {
-        await supabase.from('services').delete().eq('id', id)
+        if (target) {
+          const query = isNaN(target.id) && target.id.length > 10
+            ? supabase.from('services').delete().eq('id', target.id)
+            : supabase.from('services').delete().eq('title', target.title)
+          await query
+        }
       } catch (e) {
         console.warn('Supabase sync skipped:', e.message)
       }
@@ -351,7 +360,10 @@ export default function Dashboard({ session, onClose }) {
 
     try {
       if (editingMaster) {
-        await supabase.from('masters').update(mData).eq('id', editingMaster.id)
+        const query = isNaN(editingMaster.id) && editingMaster.id.length > 10
+          ? supabase.from('masters').update(mData).eq('id', editingMaster.id)
+          : supabase.from('masters').update(mData).eq('name', editingMaster.name)
+        await query
       } else {
         await supabase.from('masters').insert([mData])
       }
@@ -362,13 +374,19 @@ export default function Dashboard({ session, onClose }) {
 
   const deleteMaster = async (id) => {
     if (confirm('Удалить этого мастера?')) {
+      const target = dbMasters.find(m => m.id === id)
       const updated = dbMasters.filter(m => m.id !== id)
       setDbMasters(updated)
       localStorage.setItem('korni_local_masters', JSON.stringify(updated))
       window.dispatchEvent(new Event('korni_data_updated'))
 
       try {
-        await supabase.from('masters').delete().eq('id', id)
+        if (target) {
+          const query = isNaN(target.id) && target.id.length > 10
+            ? supabase.from('masters').delete().eq('id', target.id)
+            : supabase.from('masters').delete().eq('name', target.name)
+          await query
+        }
       } catch (e) {
         console.warn('Supabase sync skipped:', e.message)
       }
