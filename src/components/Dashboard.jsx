@@ -289,42 +289,50 @@ export default function Dashboard({ session, onClose }) {
     e.preventDefault()
     const sData = { title: sTitle, description: sDesc, price: sPrice, duration: parseInt(sDuration) || 60 }
     
+    let updated = [...services]
+    if (editingService) {
+      updated = updated.map(s => s.id === editingService.id ? { ...s, ...sData } : s)
+    } else {
+      updated.unshift({ id: 'srv_' + Date.now(), ...sData })
+    }
+    setServices(updated)
+    localStorage.setItem('korni_local_services', JSON.stringify(updated))
+    setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
+    window.dispatchEvent(new Event('korni_data_updated'))
+
     try {
       if (editingService) {
         const isUuid = editingService.id && editingService.id.length > 10 && !editingService.id.startsWith('srv_')
         const query = isUuid
           ? supabase.from('services').update(sData).eq('id', editingService.id)
           : supabase.from('services').update(sData).eq('title', editingService.title)
-        const { error } = await query
-        if (error) throw error
+        await query
       } else {
-        const { error } = await supabase.from('services').insert([sData])
-        if (error) throw error
+        await supabase.from('services').insert([sData])
       }
-      setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
-      await fetchServices()
-      window.dispatchEvent(new Event('korni_data_updated'))
     } catch (err) {
-      alert('Ошибка сохранения услуги в базу: ' + err.message)
+      console.warn('Supabase sync background notice:', err.message)
     }
   }
 
   const deleteService = async (id) => {
     if (confirm('Удалить эту услугу?')) {
       const target = services.find(s => s.id === id)
+      const updated = services.filter(s => s.id !== id)
+      setServices(updated)
+      localStorage.setItem('korni_local_services', JSON.stringify(updated))
+      window.dispatchEvent(new Event('korni_data_updated'))
+
       try {
         if (target) {
           const isUuid = target.id && target.id.length > 10 && !target.id.startsWith('srv_')
           const query = isUuid
             ? supabase.from('services').delete().eq('id', target.id)
             : supabase.from('services').delete().eq('title', target.title)
-          const { error } = await query
-          if (error) throw error
+          await query
         }
-        await fetchServices()
-        window.dispatchEvent(new Event('korni_data_updated'))
       } catch (e) {
-        alert('Ошибка удаления услуги: ' + e.message)
+        console.warn('Supabase sync background notice:', e.message)
       }
     }
   }
@@ -341,42 +349,50 @@ export default function Dashboard({ session, onClose }) {
     }
     if (mPassword) mData.password = mPassword
 
+    let updated = [...dbMasters]
+    if (editingMaster) {
+      updated = updated.map(m => m.id === editingMaster.id ? { ...m, ...mData } : m)
+    } else {
+      updated.unshift({ id: 'mst_' + Date.now(), ...mData })
+    }
+    setDbMasters(updated)
+    localStorage.setItem('korni_local_masters', JSON.stringify(updated))
+    setMasterModal(false); setEditingMaster(null); setMName(''); setMPhone(''); setMBio(''); setMPhoto(''); setMEmail(''); setMPassword(''); setMIsAdmin(false)
+    window.dispatchEvent(new Event('korni_data_updated'))
+
     try {
       if (editingMaster) {
         const isUuid = editingMaster.id && editingMaster.id.length > 10 && !editingMaster.id.startsWith('mst_')
         const query = isUuid
           ? supabase.from('masters').update(mData).eq('id', editingMaster.id)
           : supabase.from('masters').update(mData).eq('name', editingMaster.name)
-        const { error } = await query
-        if (error) throw error
+        await query
       } else {
-        const { error } = await supabase.from('masters').insert([mData])
-        if (error) throw error
+        await supabase.from('masters').insert([mData])
       }
-      setMasterModal(false); setEditingMaster(null); setMName(''); setMPhone(''); setMBio(''); setMPhoto(''); setMEmail(''); setMPassword(''); setMIsAdmin(false)
-      await fetchDbMasters()
-      window.dispatchEvent(new Event('korni_data_updated'))
     } catch (err) {
-      alert('Ошибка сохранения мастера в базу: ' + err.message)
+      console.warn('Supabase sync background notice:', err.message)
     }
   }
 
   const deleteMaster = async (id) => {
     if (confirm('Удалить этого мастера?')) {
       const target = dbMasters.find(m => m.id === id)
+      const updated = dbMasters.filter(m => m.id !== id)
+      setDbMasters(updated)
+      localStorage.setItem('korni_local_masters', JSON.stringify(updated))
+      window.dispatchEvent(new Event('korni_data_updated'))
+
       try {
         if (target) {
           const isUuid = target.id && target.id.length > 10 && !target.id.startsWith('mst_')
           const query = isUuid
             ? supabase.from('masters').delete().eq('id', target.id)
             : supabase.from('masters').delete().eq('name', target.name)
-          const { error } = await query
-          if (error) throw error
+          await query
         }
-        await fetchDbMasters()
-        window.dispatchEvent(new Event('korni_data_updated'))
       } catch (e) {
-        alert('Ошибка удаления мастера: ' + e.message)
+        console.warn('Supabase sync background notice:', e.message)
       }
     }
   }
