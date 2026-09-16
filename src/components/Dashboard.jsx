@@ -282,7 +282,16 @@ export default function Dashboard({ session, onClose }) {
     }
 
     try {
-      await supabase.from('services').upsert(sData)
+      let error = null
+      if (sData.id) {
+        const res = await supabase.from('services').update(sData).eq('id', sData.id)
+        error = res.error
+      } else {
+        const res = await supabase.from('services').insert([sData])
+        error = res.error
+      }
+      if (error) throw error
+
       setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
       await fetchServices()
       window.dispatchEvent(new Event('korni_data_updated'))
@@ -295,7 +304,8 @@ export default function Dashboard({ session, onClose }) {
   const deleteService = async (id) => {
     if (confirm('Удалить эту услугу?')) {
       try {
-        await supabase.from('services').delete().eq('id', id)
+        const { error } = await supabase.from('services').delete().eq('id', id)
+        if (error) throw error
         await fetchServices()
         window.dispatchEvent(new Event('korni_data_updated'))
         try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
@@ -322,7 +332,16 @@ export default function Dashboard({ session, onClose }) {
     }
 
     try {
-      await supabase.from('masters').upsert(mData)
+      let error = null
+      if (mData.id) {
+        const res = await supabase.from('masters').update(mData).eq('id', mData.id)
+        error = res.error
+      } else {
+        const res = await supabase.from('masters').insert([mData])
+        error = res.error
+      }
+      if (error) throw error
+
       setMasterModal(false); setEditingMaster(null); setMName(''); setMPhone(''); setMBio(''); setMPhoto(''); setMEmail(''); setMPassword(''); setMIsAdmin(false)
       await fetchDbMasters()
       window.dispatchEvent(new Event('korni_data_updated'))
@@ -335,7 +354,8 @@ export default function Dashboard({ session, onClose }) {
   const deleteMaster = async (id) => {
     if (confirm('Удалить этого мастера?')) {
       try {
-        await supabase.from('masters').delete().eq('id', id)
+        const { error } = await supabase.from('masters').delete().eq('id', id)
+        if (error) throw error
         await fetchDbMasters()
         window.dispatchEvent(new Event('korni_data_updated'))
         try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
