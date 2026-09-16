@@ -115,34 +115,40 @@ export default function Dashboard({ session, onClose }) {
   const [mIsAdmin, setMIsAdmin] = useState(false)
   const [period, setPeriod] = useState('month')
 
-  useEffect(() => { 
+  useEffect(() => {
+    // 1. Instant load from localStorage for zero lag
+    const localS = localStorage.getItem('korni_local_services')
+    if (localS) { try { setServices(JSON.parse(localS)) } catch (e) {} }
+    const localM = localStorage.getItem('korni_local_masters')
+    if (localM) { try { setDbMasters(JSON.parse(localM)) } catch (e) {} }
+    const localA = localStorage.getItem('korni_local_appointments')
+    if (localA) { try { filterAndSetAppts(JSON.parse(localA)) } catch (e) {} }
+
+    // 2. Fetch fresh data from Supabase in background
     fetchDbMasters()
     fetchAppts()
     fetchServices()
+
+    // 3. Real-time sync across tabs/windows
+    const channel = new BroadcastChannel('korni_sync_channel')
+    channel.onmessage = (event) => {
+      if (event.data && event.data.type === 'DATA_UPDATED') {
+        fetchDbMasters()
+        fetchAppts()
+        fetchServices()
+      }
+    }
+    return () => channel.close()
   }, [date])
 
   const fetchAppts = async () => {
     try {
       const { data, error } = await supabase.from('appointments').select('*').order('date', { ascending: false })
-      if (error) throw error
-      if (data) {
+      if (!error && data) {
         localStorage.setItem('korni_local_appointments', JSON.stringify(data))
         filterAndSetAppts(data)
-        return
       }
     } catch (e) {}
-
-    // Fallback to localStorage
-    const local = localStorage.getItem('korni_local_appointments')
-    if (local) {
-      try {
-        const parsed = JSON.parse(local)
-        filterAndSetAppts(parsed)
-        return
-      } catch (err) {}
-    }
-
-    setAppts([])
   }
 
   const filterAndSetAppts = (allAppts) => {
@@ -164,13 +170,21 @@ export default function Dashboard({ session, onClose }) {
       { title: 'Комплекс', description: 'Стрижка + оформление бороды для безупречного полного образа.', price: '2 200 ₽', duration: 90 }
     ]
 
+    if (!services.length) {
+      const local = localStorage.getItem('korni_local_services')
+      if (local) {
+        try { setServices(JSON.parse(local)) } catch (e) { setServices(defaultServices) }
+      } else {
+        setServices(defaultServices)
+      }
+    }
+
     try {
       const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: false })
       if (!error && data) {
         if (data.length > 0) {
           setServices(data)
           localStorage.setItem('korni_local_services', JSON.stringify(data))
-          return
         } else {
           for (const s of defaultServices) {
             await supabase.from('services').insert([s])
@@ -179,20 +193,10 @@ export default function Dashboard({ session, onClose }) {
           if (newData && newData.length > 0) {
             setServices(newData)
             localStorage.setItem('korni_local_services', JSON.stringify(newData))
-            return
           }
         }
       }
     } catch (e) {}
-
-    const local = localStorage.getItem('korni_local_services')
-    if (local) {
-      try {
-        setServices(JSON.parse(local))
-        return
-      } catch (err) {}
-    }
-    setServices(defaultServices)
   }
 
   const fetchDbMasters = async () => {
@@ -202,13 +206,21 @@ export default function Dashboard({ session, onClose }) {
       { name: 'Максим Петров', phone: '+7 (999) 333-44-55', bio: 'Мастер современных текстурных стрижек и стильных укладок.', photo_url: '/logo.svg', email: 'maxim@korni37.ru', is_admin: false }
     ]
 
+    if (!dbMasters.length) {
+      const local = localStorage.getItem('korni_local_masters')
+      if (local) {
+        try { setDbMasters(JSON.parse(local)) } catch (e) { setDbMasters(defaultMasters) }
+      } else {
+        setDbMasters(defaultMasters)
+      }
+    }
+
     try {
       const { data, error } = await supabase.from('masters').select('*').order('created_at', { ascending: true })
       if (!error && data) {
         if (data.length > 0) {
           setDbMasters(data)
           localStorage.setItem('korni_local_masters', JSON.stringify(data))
-          return
         } else {
           for (const m of defaultMasters) {
             await supabase.from('masters').insert([m])
@@ -217,20 +229,10 @@ export default function Dashboard({ session, onClose }) {
           if (newData && newData.length > 0) {
             setDbMasters(newData)
             localStorage.setItem('korni_local_masters', JSON.stringify(newData))
-            return
           }
         }
       }
     } catch (e) {}
-
-    const local = localStorage.getItem('korni_local_masters')
-    if (local) {
-      try {
-        setDbMasters(JSON.parse(local))
-        return
-      } catch (err) {}
-    }
-    setDbMasters(defaultMasters)
   }
 
   const createAppt = async (e) => {
@@ -307,6 +309,7 @@ export default function Dashboard({ session, onClose }) {
     localStorage.setItem('korni_local_services', JSON.stringify(updated))
     setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
     window.dispatchEvent(new Event('korni_data_updated'))
+    try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
     try {
       if (editingService) {
@@ -330,6 +333,7 @@ export default function Dashboard({ session, onClose }) {
       setServices(updated)
       localStorage.setItem('korni_local_services', JSON.stringify(updated))
       window.dispatchEvent(new Event('korni_data_updated'))
+      try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
       try {
         if (target) {
@@ -367,6 +371,7 @@ export default function Dashboard({ session, onClose }) {
     localStorage.setItem('korni_local_masters', JSON.stringify(updated))
     setMasterModal(false); setEditingMaster(null); setMName(''); setMPhone(''); setMBio(''); setMPhoto(''); setMEmail(''); setMPassword(''); setMIsAdmin(false)
     window.dispatchEvent(new Event('korni_data_updated'))
+    try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
     try {
       if (editingMaster) {
@@ -390,6 +395,7 @@ export default function Dashboard({ session, onClose }) {
       setDbMasters(updated)
       localStorage.setItem('korni_local_masters', JSON.stringify(updated))
       window.dispatchEvent(new Event('korni_data_updated'))
+      try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
       try {
         if (target) {
