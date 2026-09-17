@@ -131,7 +131,7 @@ export default function Dashboard({ session, onClose }) {
     fetchAppts()
     fetchServices()
 
-    // 3. Real-time sync across tabs/windows
+    // 3. Real-time sync across tabs/windows & Supabase Realtime
     const channel = new BroadcastChannel('korni_sync_channel')
     channel.onmessage = (event) => {
       if (event.data && event.data.type === 'DATA_UPDATED') {
@@ -140,7 +140,18 @@ export default function Dashboard({ session, onClose }) {
         fetchServices()
       }
     }
-    return () => channel.close()
+
+    const sbChannel = supabase
+      .channel('public:dashboard_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, () => { fetchServices() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'masters' }, () => { fetchDbMasters() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => { fetchAppts() })
+      .subscribe()
+
+    return () => {
+      channel.close()
+      supabase.removeChannel(sbChannel)
+    }
   }, [date])
 
   const fetchAppts = async () => {

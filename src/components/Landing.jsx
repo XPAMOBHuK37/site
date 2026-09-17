@@ -19,14 +19,22 @@ export default function Landing({ onOpenBooking }) {
     const handleUpdate = () => fetchData()
     window.addEventListener('korni_data_updated', handleUpdate)
     window.addEventListener('storage', handleUpdate)
+
+    const channel = supabase
+      .channel('public:landing_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'masters' }, () => fetchData())
+      .subscribe()
+
     return () => {
       window.removeEventListener('korni_data_updated', handleUpdate)
       window.removeEventListener('storage', handleUpdate)
+      supabase.removeChannel(channel)
     }
   }, [])
 
   const fetchData = async () => {
-    const localS = localStorage.getItem('korni_local_services')
+    const localS = localStorage.getItem('korni_public_global_services')
     if (localS) {
       try {
         const parsed = JSON.parse(localS)
@@ -47,10 +55,11 @@ export default function Landing({ onOpenBooking }) {
     }
 
     try {
-      const { data: sData, error: sErr } = await supabase.from('services').select('*').is('master_id', null).order('created_at', { ascending: false })
+      const { data: sData, error: sErr } = await supabase.from('services').select('*').order('created_at', { ascending: false })
       if (!sErr && sData) {
-        setServices(sData)
-        localStorage.setItem('korni_local_services', JSON.stringify(sData))
+        const globalOnly = sData.filter(s => !s.master_id || s.master_id === '' || s.master_id === 'null')
+        setServices(globalOnly)
+        localStorage.setItem('korni_public_global_services', JSON.stringify(globalOnly))
       }
     } catch (e) {}
 
