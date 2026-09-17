@@ -282,7 +282,7 @@ export default function Dashboard({ session, onClose }) {
       description: sDesc, 
       price: sPrice, 
       duration: parseInt(sDuration) || 60,
-      master_id: sMasterId || null 
+      master_id: (sMasterId && sMasterId !== 'global' && sMasterId !== '') ? sMasterId : null 
     }
     
     if (editingService && editingService.id && !editingService.id.startsWith('srv_')) {
@@ -552,7 +552,7 @@ export default function Dashboard({ session, onClose }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {services.filter(s => serviceMasterFilter === 'global' ? !s.master_id : s.master_id === serviceMasterFilter).map(s => (
+              {services.filter(s => serviceMasterFilter === 'global' ? (!s.master_id || s.master_id === '' || s.master_id === 'null') : s.master_id === serviceMasterFilter).map(s => (
                 <div key={s.id} className="bg-zinc-950 border border-zinc-800 p-5 rounded-xl flex flex-col justify-between space-y-4">
                   <div>
                     <h3 className="font-bold text-lg text-amber-400">{s.title}</h3>
@@ -568,7 +568,7 @@ export default function Dashboard({ session, onClose }) {
                   </div>
                 </div>
               ))}
-              {services.filter(s => serviceMasterFilter === 'global' ? !s.master_id : s.master_id === serviceMasterFilter).length === 0 && (
+              {services.filter(s => serviceMasterFilter === 'global' ? (!s.master_id || s.master_id === '' || s.master_id === 'null') : s.master_id === serviceMasterFilter).length === 0 && (
                 <div className="col-span-full text-center py-8 text-zinc-500 text-sm">Нет услуг в этой категории</div>
               )}
             </div>
