@@ -21,6 +21,14 @@ export default function BookingModal({ onClose, onSuccess, initialData }) {
     fetchData()
   }, [])
 
+  React.useEffect(() => {
+    if (initialData?.master && masters.length > 0) {
+      const target = initialData.master
+      const found = masters.find(m => m.id === target || m.name === target || m.name === target?.name)
+      if (found) setMst(found)
+    }
+  }, [initialData, masters])
+
   const fetchData = async () => {
     try {
       const localS = localStorage.getItem('korni_local_services')

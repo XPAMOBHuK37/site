@@ -218,7 +218,7 @@ export default function Landing({ onOpenBooking }) {
                 )}
                 <p className="text-[#b8a99a] text-sm leading-relaxed mb-6">{m.bio}</p>
                 <button 
-                  onClick={() => onOpenBooking && onOpenBooking({ master: m.name })}
+                  onClick={() => onOpenBooking && onOpenBooking({ master: m })}
                   className="mt-auto bg-[#9e3627] text-[#f4e8d3] font-['Montserrat',sans-serif] text-[11px] font-extrabold tracking-[2px] uppercase px-5 py-2.5 border border-[#d49b35] rounded-[2px] cursor-pointer hover:bg-[#b53d2c] transition-all"
                 >
                   Записаться к мастеру
