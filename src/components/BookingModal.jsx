@@ -4,9 +4,9 @@ import { supabase } from '../supabaseClient'
 import { StepService, StepMaster, StepTime, StepContacts, StepConfirm } from './BookingSteps'
 
 export default function BookingModal({ onClose, onSuccess, initialData }) {
-  const [srv, setSrv] = useState(initialData?.service || null)
   const [mst, setMst] = useState(initialData?.master || null)
-  const [s, setS] = useState(initialData?.service ? 2 : 1)
+  const [srv, setSrv] = useState(initialData?.service || null)
+  const [s, setS] = useState(initialData?.master ? 2 : 1) // 1: Master, 2: Service, 3: Time, 4: Contacts, 5: Confirm
   const [n, setN] = useState('')
   const [p, setP] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
@@ -14,16 +14,8 @@ export default function BookingModal({ onClose, onSuccess, initialData }) {
   const [load, setLoad] = useState(false)
   const [ok, setOk] = useState(false)
 
-  const [svcs, setSvcs] = useState([
-    { title: 'Мужская стрижка', price: '1 500 ₽' },
-    { title: 'Оформление бороды', price: '1 000 ₽' },
-    { title: 'Комплекс', price: '2 200 ₽' }
-  ])
-  const [masters, setMasters] = useState([
-    { name: 'Алексей Смирнов' },
-    { name: 'Дмитрий Иванов' },
-    { name: 'Максим Петров' }
-  ])
+  const [svcs, setSvcs] = useState([])
+  const [masters, setMasters] = useState([])
 
   React.useEffect(() => {
     fetchData()
@@ -72,7 +64,7 @@ export default function BookingModal({ onClose, onSuccess, initialData }) {
   const sub = async (e) => {
     e.preventDefault(); setLoad(true)
     const serviceTitle = srv?.title || srv?.t || 'Мужская стрижка'
-    const masterName = mst || 'Любой мастер'
+    const masterName = typeof mst === 'string' ? mst : (mst?.name || 'Мастер')
 
     try {
       await supabase.from('appointments').insert([{
@@ -119,8 +111,8 @@ export default function BookingModal({ onClose, onSuccess, initialData }) {
           </div>
         ) : (
           <div>
-            {s === 1 && <StepService svcs={svcs} srv={srv} setSrv={setSrv} onNext={() => setS(2)} />}
-            {s === 2 && <StepMaster masters={masters} mst={mst} setMst={setMst} onBack={() => setS(1)} onNext={() => setS(3)} />}
+            {s === 1 && <StepMaster masters={masters} mst={mst} setMst={setMst} onNext={() => setS(2)} />}
+            {s === 2 && <StepService svcs={svcs} mst={mst} srv={srv} setSrv={setSrv} onBack={() => setS(1)} onNext={() => setS(3)} />}
             {s === 3 && <StepTime date={date} setDate={setDate} time={time} setTime={setTime} slots={slots} onBack={() => setS(2)} onNext={() => setS(4)} />}
             {s === 4 && <StepContacts name={n} setName={setN} phone={p} setPhone={setP} onBack={() => setS(3)} onNext={() => setS(5)} />}
             {s === 5 && <StepConfirm srv={srv} mst={mst} date={date} time={time} name={n} phone={p} load={load} onBack={() => setS(4)} onSubmit={sub} />}

@@ -47,7 +47,7 @@ export default function Landing({ onOpenBooking }) {
     }
 
     try {
-      const { data: sData, error: sErr } = await supabase.from('services').select('*').order('created_at', { ascending: false })
+      const { data: sData, error: sErr } = await supabase.from('services').select('*').is('master_id', null).order('created_at', { ascending: false })
       if (!sErr && sData) {
         setServices(sData)
         localStorage.setItem('korni_local_services', JSON.stringify(sData))

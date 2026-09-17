@@ -102,6 +102,8 @@ export default function Dashboard({ session, onClose }) {
   const [sDesc, setSDesc] = useState('')
   const [sPrice, setSPrice] = useState('')
   const [sDuration, setSDuration] = useState('60')
+  const [serviceMasterFilter, setServiceMasterFilter] = useState('global')
+  const [sMasterId, setSMasterId] = useState('')
 
   // Masters DB state
   const [masterModal, setMasterModal] = useState(false)
@@ -275,7 +277,13 @@ export default function Dashboard({ session, onClose }) {
 
   const saveService = async (e) => {
     e.preventDefault()
-    const sData = { title: sTitle, description: sDesc, price: sPrice, duration: parseInt(sDuration) || 60 }
+    const sData = { 
+      title: sTitle, 
+      description: sDesc, 
+      price: sPrice, 
+      duration: parseInt(sDuration) || 60,
+      master_id: sMasterId || null 
+    }
     
     if (editingService && editingService.id && !editingService.id.startsWith('srv_')) {
       sData.id = editingService.id
@@ -289,7 +297,7 @@ export default function Dashboard({ session, onClose }) {
     }
     setServices(updated)
     localStorage.setItem('korni_local_services', JSON.stringify(updated))
-    setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60')
+    setServiceModal(false); setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60'); setSMasterId('')
     window.dispatchEvent(new Event('korni_data_updated'))
     try { const channel = new BroadcastChannel('korni_sync_channel'); channel.postMessage({ type: 'DATA_UPDATED' }); channel.close(); } catch (e) {}
 
@@ -522,21 +530,29 @@ export default function Dashboard({ session, onClose }) {
         )}
         {tab === 'services' && (
           <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h2 className="text-xl font-bold">Управление услугами и ценами</h2>
-                <p className="text-xs text-zinc-400">Добавляйте, редактируйте или удаляйте услуги, отображаемые на главной странице.</p>
+                <p className="text-xs text-zinc-400 mt-0.5">Общие услуги отображаются на сайте, а индивидуальные — только при записи к конкретному мастеру</p>
               </div>
               <button 
-                onClick={() => { setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60'); setServiceModal(true) }}
-                className="bg-amber-500 text-zinc-950 font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2"
+                onClick={() => { setEditingService(null); setSTitle(''); setSDesc(''); setSPrice(''); setSDuration('60'); setSMasterId(serviceMasterFilter === 'global' ? '' : serviceMasterFilter); setServiceModal(true) }}
+                className="bg-amber-500 text-zinc-950 font-bold px-4 py-2 rounded-xl text-sm flex items-center space-x-2 cursor-pointer"
               >
                 <Plus className="w-4 h-4" /><span>Добавить услугу</span>
               </button>
             </div>
 
+            {/* Master filter tabs */}
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800">
+              <button onClick={() => setServiceMasterFilter('global')} className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${serviceMasterFilter === 'global' ? 'bg-amber-500 text-zinc-950' : 'bg-zinc-800 text-zinc-300'}`}>🌍 Общие услуги</button>
+              {dbMasters.map(m => (
+                <button key={m.id} onClick={() => setServiceMasterFilter(m.id)} className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${serviceMasterFilter === m.id ? 'bg-amber-500 text-zinc-950' : 'bg-zinc-800 text-zinc-300'}`}>👤 {m.name}</button>
+              ))}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {services.map(s => (
+              {services.filter(s => serviceMasterFilter === 'global' ? !s.master_id : s.master_id === serviceMasterFilter).map(s => (
                 <div key={s.id} className="bg-zinc-950 border border-zinc-800 p-5 rounded-xl flex flex-col justify-between space-y-4">
                   <div>
                     <h3 className="font-bold text-lg text-amber-400">{s.title}</h3>
@@ -546,12 +562,15 @@ export default function Dashboard({ session, onClose }) {
                   <div className="flex justify-between items-center pt-3 border-t border-zinc-900">
                     <span className="font-bold text-white text-base">{s.price}</span>
                     <div className="flex space-x-2">
-                      <button onClick={() => { setEditingService(s); setSTitle(s.title); setSDesc(s.description); setSPrice(s.price); setSDuration(s.duration?.toString() || '60'); setServiceModal(true) }} className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300"><Edit className="w-4 h-4" /></button>
-                      <button onClick={() => deleteService(s.id)} className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg text-red-400"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => { setEditingService(s); setSTitle(s.title); setSDesc(s.description); setSPrice(s.price); setSDuration(s.duration?.toString() || '60'); setSMasterId(s.master_id || ''); setServiceModal(true) }} className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-300 cursor-pointer"><Edit className="w-4 h-4" /></button>
+                      <button onClick={() => deleteService(s.id)} className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg text-red-400 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
                 </div>
               ))}
+              {services.filter(s => serviceMasterFilter === 'global' ? !s.master_id : s.master_id === serviceMasterFilter).length === 0 && (
+                <div className="col-span-full text-center py-8 text-zinc-500 text-sm">Нет услуг в этой категории</div>
+              )}
             </div>
 
             {serviceModal && (
@@ -559,6 +578,13 @@ export default function Dashboard({ session, onClose }) {
                 <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-6 space-y-4">
                   <h3 className="text-lg font-bold">{editingService ? 'Редактировать услугу' : 'Новая услуга'}</h3>
                   <form onSubmit={saveService} className="space-y-4">
+                    <div>
+                      <label className="block text-xs uppercase text-zinc-400 mb-1">Привязка услуги</label>
+                      <select value={sMasterId} onChange={e => setSMasterId(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-white outline-none cursor-pointer">
+                        <option value="">🌍 Общая услуга (для всех и на главную)</option>
+                        {dbMasters.map(m => <option key={m.id} value={m.id}>👤 Только для мастера: {m.name}</option>)}
+                      </select>
+                    </div>
                     <div>
                       <label className="block text-xs uppercase text-zinc-400 mb-1">Название услуги</label>
                       <input type="text" value={sTitle} onChange={e => setSTitle(e.target.value)} required className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none" />
@@ -576,8 +602,8 @@ export default function Dashboard({ session, onClose }) {
                       <input type="number" step="15" min="15" value={sDuration} onChange={e => setSDuration(e.target.value)} required className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none" />
                     </div>
                     <div className="flex justify-end space-x-3 pt-2">
-                      <button type="button" onClick={() => setServiceModal(false)} className="bg-zinc-800 px-4 py-2 rounded-xl text-sm font-semibold">Отмена</button>
-                      <button type="submit" className="bg-amber-500 text-zinc-950 font-bold px-5 py-2 rounded-xl text-sm">Сохранить</button>
+                      <button type="button" onClick={() => setServiceModal(false)} className="bg-zinc-800 px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer">Отмена</button>
+                      <button type="submit" className="bg-amber-500 text-zinc-950 font-bold px-5 py-2 rounded-xl text-sm cursor-pointer">Сохранить</button>
                     </div>
                   </form>
                 </div>
