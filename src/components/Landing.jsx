@@ -9,9 +9,9 @@ export default function Landing({ onOpenBooking }) {
     { title: 'Комплекс', description: 'Стрижка + оформление бороды для безупречного полного образа.', price: '2 200 ₽' }
   ])
   const [masters, setMasters] = useState([
-    { name: 'Алексей Смирнов', phone: '+7 (999) 111-22-33', bio: 'Старший барбер со стажем более 10 лет. Мастер классических стрижек.', photo_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80' },
-    { name: 'Дмитрий Иванов', phone: '+7 (999) 222-33-44', bio: 'Эксперт по опасной бритве и моделированию бород.', photo_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80' },
-    { name: 'Максим Петров', phone: '+7 (999) 333-44-55', bio: 'Мастер современных текстурных стрижек и стильных укладок.', photo_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80' }
+    { name: 'Алексей Смирнов', phone: '+7 (999) 111-22-33', bio: 'Старший барбер со стажем более 10 лет. Мастер классических стрижек.', photo_url: '/logo.svg' },
+    { name: 'Дмитрий Иванов', phone: '+7 (999) 222-33-44', bio: 'Эксперт по опасной бритве и моделированию бород.', photo_url: '/logo.svg' },
+    { name: 'Максим Петров', phone: '+7 (999) 333-44-55', bio: 'Мастер современных текстурных стрижек и стильных укладок.', photo_url: '/logo.svg' }
   ])
 
   useEffect(() => {

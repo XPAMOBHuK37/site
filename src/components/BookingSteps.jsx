@@ -19,8 +19,14 @@ export function StepMaster({ masters, mst, setMst, onNext }) {
 }
 
 export function StepService({ svcs, mst, srv, setSrv, onBack, onNext }) {
-  const generalSvcs = svcs.filter(item => !item.master_id)
-  const masterSvcs = svcs.filter(item => item.master_id && (item.master_id === mst?.id || item.master_name === mst?.name))
+  const masterId = mst?.id
+  const masterName = typeof mst === 'string' ? mst : mst?.name
+
+  const generalSvcs = svcs.filter(item => !item.master_id || item.master_id === '' || item.master_id === 'null')
+  const masterSvcs = svcs.filter(item => {
+    if (!item.master_id || item.master_id === '' || item.master_id === 'null') return false
+    return item.master_id === masterId || item.master_name === masterName
+  })
 
   return (
     <div className="space-y-3 max-h-[320px] overflow-y-auto">
