@@ -9,6 +9,7 @@ create table if not exists public.services (
   description text,
   price text not null,
   duration integer default 60,
+  master_id uuid references public.masters(id) on delete cascade,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
