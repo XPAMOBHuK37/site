@@ -2,9 +2,9 @@ import React from 'react'
 
 export function StepMaster({ masters, mst, setMst, onNext }) {
   return (
-    <div className='space-y-3'>
-      <h4 className='text-xs uppercase text-zinc-400 font-bold tracking-wider'>1. Выберите мастера</h4>
-      <div className='grid grid-cols-2 gap-2'>
+    <div className="space-y-3">
+      <h4 className="text-xs uppercase text-zinc-400 font-bold tracking-wider">1. Выберите мастера</h4>
+      <div className="grid grid-cols-2 gap-2">
         {masters.map((m, i) => {
           const name = typeof m === 'string' ? m : m.name
           const isSelected = mst?.id === m.id || mst?.name === name || mst === name
@@ -12,10 +12,10 @@ export function StepMaster({ masters, mst, setMst, onNext }) {
             <div 
               key={m.id || i} 
               onClick={() => { setMst(m); onNext(); }} 
-              className={p-3 rounded-xl border cursor-pointer transition text-center flex flex-col items-center justify-center space-y-2 }
+              className={`p-3 rounded-xl border cursor-pointer transition text-center flex flex-col items-center justify-center space-y-2 ${isSelected ? 'border-amber-500 bg-amber-500/20 text-white font-bold shadow-lg' : 'border-zinc-800 bg-zinc-950 text-zinc-300 hover:border-zinc-700'}`}
             >
-              <img src={m.photo_url || '/logo.svg'} onError={(e) => { e.target.src = '/logo.svg'; }} alt={name} className='w-12 h-12 rounded-full object-cover border border-amber-500/40' />
-              <span className='text-xs font-semibold leading-tight'>{name}</span>
+              <img src={m.photo_url || '/logo.svg'} onError={(e) => { e.target.src = '/logo.svg'; }} alt={name} className="w-12 h-12 rounded-full object-cover border border-amber-500/40" />
+              <span className="text-xs font-semibold leading-tight">{name}</span>
             </div>
           )
         })}
@@ -35,21 +35,21 @@ export function StepService({ svcs, mst, srv, setSrv, onNext }) {
   })
 
   return (
-    <div className='space-y-3'>
-      <h4 className='text-xs uppercase text-zinc-400 font-bold tracking-wider'>2. Выберите услугу</h4>
+    <div className="space-y-3">
+      <h4 className="text-xs uppercase text-zinc-400 font-bold tracking-wider">2. Выберите услугу</h4>
       
       {generalSvcs.length > 0 && (
-        <div className='space-y-2'>
-          <div className='text-[10px] uppercase text-amber-500 font-extrabold tracking-widest'>Общие услуги</div>
-          <div className='grid grid-cols-1 gap-2'>
+        <div className="space-y-2">
+          <div className="text-[10px] uppercase text-amber-500 font-extrabold tracking-widest">Общие услуги</div>
+          <div className="grid grid-cols-1 gap-2">
             {generalSvcs.map((item, i) => {
               const title = item.title || item.t || 'Услуга'
               const price = item.price || item.pr || '1 500 ₽'
               const isSelected = srv?.id === item.id || srv?.title === title
               return (
-                <div key={item.id || i} onClick={() => { setSrv(item); onNext(); }} className={p-3 rounded-xl border cursor-pointer flex justify-between items-center transition }>
-                  <span className='font-semibold text-xs'>{title}</span>
-                  <span className='text-amber-400 font-bold text-xs'>{price}</span>
+                <div key={item.id || i} onClick={() => { setSrv(item); onNext(); }} className={`p-3 rounded-xl border cursor-pointer flex justify-between items-center transition ${isSelected ? 'border-amber-500 bg-amber-500/20 text-white font-bold' : 'border-zinc-800 bg-zinc-950 text-zinc-300 hover:border-zinc-700'}`}>
+                  <span className="font-semibold text-xs">{title}</span>
+                  <span className="text-amber-400 font-bold text-xs">{price}</span>
                 </div>
               )
             })}
@@ -58,17 +58,17 @@ export function StepService({ svcs, mst, srv, setSrv, onNext }) {
       )}
 
       {masterSvcs.length > 0 && (
-        <div className='space-y-2 pt-1'>
-          <div className='text-[10px] uppercase text-amber-500 font-extrabold tracking-widest'>Индивидуальные услуги мастера</div>
-          <div className='grid grid-cols-1 gap-2'>
+        <div className="space-y-2 pt-1">
+          <div className="text-[10px] uppercase text-amber-500 font-extrabold tracking-widest">Индивидуальные услуги мастера</div>
+          <div className="grid grid-cols-1 gap-2">
             {masterSvcs.map((item, i) => {
               const title = item.title || item.t || 'Услуга'
               const price = item.price || item.pr || '1 500 ₽'
               const isSelected = srv?.id === item.id || srv?.title === title
               return (
-                <div key={item.id || i} onClick={() => { setSrv(item); onNext(); }} className={p-3 rounded-xl border cursor-pointer flex justify-between items-center transition }>
-                  <span className='font-semibold text-xs'>{title}</span>
-                  <span className='text-amber-400 font-bold text-xs'>{price}</span>
+                <div key={item.id || i} onClick={() => { setSrv(item); onNext(); }} className={`p-3 rounded-xl border cursor-pointer flex justify-between items-center transition ${isSelected ? 'border-amber-500 bg-amber-500/20 text-white font-bold' : 'border-zinc-800 bg-zinc-950 text-zinc-300 hover:border-zinc-700'}`}>
+                  <span className="font-semibold text-xs">{title}</span>
+                  <span className="text-amber-400 font-bold text-xs">{price}</span>
                 </div>
               )
             })}
@@ -77,7 +77,7 @@ export function StepService({ svcs, mst, srv, setSrv, onNext }) {
       )}
 
       {generalSvcs.length === 0 && masterSvcs.length === 0 && (
-        <div className='text-xs text-zinc-500 text-center py-6'>Нет доступных услуг</div>
+        <div className="text-xs text-zinc-500 text-center py-6">Нет доступных услуг</div>
       )}
     </div>
   )
