@@ -23,8 +23,12 @@ export default function Dashboard({ session, onClose }) {
   const [time, setTime] = useState('12:00')
   const [selectedService, setSelectedService] = useState('')
 
-  const currentMasterObj = session?.user?.master || dbMasters.find(m => m.phone === session?.user?.email || m.email === session?.user?.email || m.name?.toLowerCase() === session?.user?.email?.split('@')[0])
-  const currentMasterName = currentMasterObj?.name || session?.user?.master?.name || session?.user?.email?.split('@')[0] || 'Мастер'
+  const selectedMasterObj = dbMasters.find(m => m.name === master) || dbMasters[0]
+  const currentMasterObj = isAdmin 
+    ? selectedMasterObj 
+    : (session?.user?.master || dbMasters.find(m => m.phone === session?.user?.email || m.email === session?.user?.email || m.name?.toLowerCase() === session?.user?.email?.split('@')[0]) || dbMasters[0])
+
+  const currentMasterName = currentMasterObj?.name || (isAdmin ? master : 'Мастер')
 
   const [workStart, setWorkStart] = useState('10:00')
   const [workEnd, setWorkEnd] = useState('23:00')
@@ -41,7 +45,7 @@ export default function Dashboard({ session, onClose }) {
       setDailySchedules(currentMasterObj.daily_schedules || {})
       setClosedHours(currentMasterObj.closed_hours || {})
     }
-  }, [currentMasterObj])
+  }, [currentMasterObj, master])
 
   const toggleClosedHour = async (dateStr, hourStr) => {
     if (!currentMasterObj) return
@@ -148,18 +152,37 @@ export default function Dashboard({ session, onClose }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => { fetchAppts() })
       .subscribe()
 
+    const handleUpdate = () => {
+      fetchDbMasters()
+      fetchAppts()
+      fetchServices()
+    }
+    window.addEventListener('korni_data_updated', handleUpdate)
+    window.addEventListener('storage', handleUpdate)
+
     return () => {
       channel.close()
       supabase.removeChannel(sbChannel)
+      window.removeEventListener('korni_data_updated', handleUpdate)
+      window.removeEventListener('storage', handleUpdate)
     }
   }, [date])
 
   const fetchAppts = async () => {
+    const local = JSON.parse(localStorage.getItem('korni_local_appointments') || '[]')
+    filterAndSetAppts(local)
+
     try {
       const { data, error } = await supabase.from('appointments').select('*').order('date', { ascending: false })
       if (!error && data) {
-        localStorage.setItem('korni_local_appointments', JSON.stringify(data))
-        filterAndSetAppts(data)
+        const merged = [...data]
+        for (const loc of local) {
+          if (!merged.some(m => m.id === loc.id || (m.client_phone === loc.client_phone && m.date === loc.date && m.start_time === loc.start_time))) {
+            merged.unshift(loc)
+          }
+        }
+        localStorage.setItem('korni_local_appointments', JSON.stringify(merged))
+        filterAndSetAppts(merged)
       }
     } catch (e) {}
   }
@@ -229,24 +252,41 @@ export default function Dashboard({ session, onClose }) {
   const createAppt = async (e) => {
     e.preventDefault()
     try {
-      const apptData = { 
-        id: Date.now().toString(),
-        client_name: name, 
-        client_phone: phone, 
-        date, 
-        start_time: time, 
-        master_name: isAdmin ? master : currentMasterName,
+      const targetMasterName = isAdmin ? master : currentMasterName
+      const apptForDb = {
+        client_name: name,
+        client_phone: phone,
+        date,
+        start_time: time,
+        master_name: targetMasterName,
         service_title: selectedService || services[0]?.title || 'Стрижка',
-        status: 'Подтверждена' 
+        status: 'Подтверждена'
       }
+
+      let insertedId = Date.now().toString()
       try {
-        await supabase.from('appointments').insert([apptData])
+        const { data, error } = await supabase.from('appointments').insert([apptForDb]).select()
+        if (!error && data && data[0]?.id) {
+          insertedId = data[0].id
+        }
       } catch (err) {}
+
+      const apptData = { 
+        id: insertedId,
+        ...apptForDb
+      }
 
       const local = localStorage.getItem('korni_local_appointments')
       let existing = local ? JSON.parse(local) : []
       existing.unshift(apptData)
       localStorage.setItem('korni_local_appointments', JSON.stringify(existing))
+
+      window.dispatchEvent(new Event('korni_data_updated'))
+      try {
+        const channel = new BroadcastChannel('korni_sync_channel')
+        channel.postMessage({ type: 'DATA_UPDATED' })
+        channel.close()
+      } catch (e) {}
 
       setName(''); setPhone(''); setModal(false); fetchAppts()
     } catch (err) {
@@ -271,10 +311,9 @@ export default function Dashboard({ session, onClose }) {
 
   const deleteAppt = async (id) => {
     if (confirm('Удалить эту запись?')) {
-      try {
-        await supabase.from('appointments').delete().eq('id', id)
-      } catch (e) {}
-
+      const updated = appts.filter(a => a.id !== id)
+      filterAndSetAppts(updated)
+      
       const local = localStorage.getItem('korni_local_appointments')
       if (local) {
         try {
@@ -282,7 +321,22 @@ export default function Dashboard({ session, onClose }) {
           localStorage.setItem('korni_local_appointments', JSON.stringify(parsed))
         } catch (e) {}
       }
-      fetchAppts()
+
+      window.dispatchEvent(new Event('korni_data_updated'))
+      try {
+        const channel = new BroadcastChannel('korni_sync_channel')
+        channel.postMessage({ type: 'DATA_UPDATED' })
+        channel.close()
+      } catch (e) {}
+
+      // Background Supabase deletion (non-blocking)
+      (async () => {
+        try {
+          await supabase.from('appointments').delete().eq('id', id)
+        } catch (e) {
+          console.warn('Background delete notice:', e)
+        }
+      })()
     }
   }
 
@@ -447,7 +501,20 @@ export default function Dashboard({ session, onClose }) {
     localStorage.setItem('korni_local_masters', JSON.stringify(updatedMasters))
   }
 
-  const filtered = appts.filter(a => a.client_name.toLowerCase().includes(search.toLowerCase()) || a.client_phone.includes(search))
+  const filtered = appts.filter(a => {
+    if (isAdmin) {
+      if (master && master !== 'Все мастера') {
+        if (a.master_name && a.master_name !== master && !a.master_name.toLowerCase().includes(master.toLowerCase().split(' ')[0])) {
+          return false
+        }
+      }
+    } else if (!isAdmin && currentMasterName) {
+      if (a.master_name && a.master_name !== currentMasterName && !a.master_name.toLowerCase().includes(currentMasterName.toLowerCase().split(' ')[0])) {
+        return false
+      }
+    }
+    return (a.client_name || '').toLowerCase().includes(search.toLowerCase()) || (a.client_phone || '').includes(search)
+  })
 
   return (
     <div className="bg-zinc-950 text-zinc-100 min-h-screen p-4 sm:p-8 font-sans">
@@ -476,12 +543,31 @@ export default function Dashboard({ session, onClose }) {
 
         {tab === 'appts' && (
           <div className="space-y-6">
+            {isAdmin && (
+              <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4 shadow-lg">
+                <div className="flex items-center space-x-3 w-full sm:w-auto">
+                  <span className="text-xs uppercase font-extrabold text-amber-500 whitespace-nowrap tracking-wider">Выберите мастера:</span>
+                  <select 
+                    value={master} 
+                    onChange={e => setMaster(e.target.value)} 
+                    className="bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none font-bold cursor-pointer w-full sm:w-72"
+                  >
+                    <option value="Все мастера">✨ Все мастера (общий просмотр)</option>
+                    {dbMasters.map(m => <option key={m.id || m.name} value={m.name}>{m.name}</option>)}
+                  </select>
+                </div>
+                <div className="text-xs text-zinc-400 font-medium">
+                  {master === 'Все мастера' ? 'Отображение всех записей' : `Настройка графиков, выходных и часов для: 💡 ${master}`}
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-zinc-900 border border-zinc-800 p-4 rounded-2xl">
               <div>
-                <h2 className="text-lg font-bold">Расписание записей</h2>
+                <h2 className="text-lg font-bold">Расписание записей {master !== 'Все мастера' ? `(${master})` : ''}</h2>
                 <p className="text-xs text-zinc-400 mt-0.5">Недельная сетка расписания</p>
               </div>
-              <button onClick={() => { setMaster(currentMasterName); setSelectedService(services[0]?.title || ''); setModal(true) }} className="bg-amber-500 text-zinc-950 font-bold px-5 py-2.5 rounded-xl text-sm flex items-center space-x-2 cursor-pointer"><Plus className="w-4 h-4" /><span>Создать запись</span></button>
+              <button onClick={() => { setMaster(master === 'Все мастера' ? (dbMasters[0]?.name || 'Мастер') : master); setSelectedService(services[0]?.title || ''); setModal(true) }} className="bg-amber-500 text-zinc-950 font-bold px-5 py-2.5 rounded-xl text-sm flex items-center space-x-2 cursor-pointer"><Plus className="w-4 h-4" /><span>Создать запись</span></button>
             </div>
 
             <DashboardTimeline date={date} onDateChange={setDate} filtered={filtered} onSelectSlot={(d, t) => { setDate(d); setTime(t); setMaster(currentMasterName); setSelectedService(services[0]?.title || ''); setModal(true) }} onDeleteAppt={deleteAppt} services={services} daysOff={daysOff} onToggleDayOff={toggleDayOff} dailySchedules={dailySchedules} onUpdateDailyHours={updateDailyHours} closedHours={closedHours} onToggleClosedHour={toggleClosedHour} />

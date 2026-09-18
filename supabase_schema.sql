@@ -42,11 +42,7 @@ create table if not exists public.appointments (
 -- Disable RLS for seamless setup & admin operations
 alter table public.services disable row level security;
 alter table public.masters disable row level security;
-alter table public.appointments enable row level security;
+alter table public.appointments disable row level security;
 
-create policy "Appointments viewable by authenticated users" on public.appointments for select using (auth.role() = 'authenticated');
-create policy "Appointments insertable by everyone" on public.appointments for insert with check (true);
-create policy "Appointments manageable by authenticated users" on public.appointments for update using (auth.role() = 'authenticated');
-create policy "Appointments deletable by authenticated users" on public.appointments for delete using (auth.role() = 'authenticated');
 
 
