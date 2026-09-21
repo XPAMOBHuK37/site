@@ -76,34 +76,13 @@
     };
   }
 
+  window.KorniOpenEvents = openEvents;
+
   function mountAdminButtons() {
-    if (!isAdmin()) return;
-    if (!document.body.innerText.includes('Админ-панель')) return;
-
-    if (!document.getElementById('korni-admin-tabs-extra')) {
-      const header = Array.from(document.querySelectorAll('div')).find(el =>
-        el.innerText && el.innerText.includes('Админ-панель') && el.querySelector('button')
-      );
-      if (header) {
-        const tabs = document.createElement('div');
-        tabs.id = 'korni-admin-tabs-extra';
-        tabs.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:12px';
-        tabs.innerHTML = `<button style="padding:9px 13px;border-radius:12px;border:1px solid #444;background:#18181b;color:#fff;font-weight:800;cursor:pointer">🎨 Цвета мастеров</button><button style="padding:9px 13px;border-radius:12px;border:1px solid #d97706;background:#f59e0b;color:#111;font-weight:900;cursor:pointer">📣 События</button>`;
-        tabs.children[0].onclick = openColors;
-        tabs.children[1].onclick = openEvents;
-        header.appendChild(tabs);
-      }
-    }
-
-    if (document.getElementById('korni-admin-extra')) return;
-    const box = document.createElement('div');
-    box.id = 'korni-admin-extra';
-    box.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:99999;display:flex;flex-direction:column;gap:8px';
-    box.innerHTML = `<button style="padding:10px 12px;border-radius:12px;border:1px solid #444;background:#18181b;color:#fff;font-weight:800;cursor:pointer">🎨 Цвета мастеров</button><button style="padding:10px 12px;border-radius:12px;border:1px solid #444;background:#f59e0b;color:#111;font-weight:900;cursor:pointer">📣 События</button>`;
-    box.children[0].onclick = openColors;
-    box.children[1].onclick = openEvents;
-    document.body.appendChild(box);
+    document.getElementById('korni-admin-extra')?.remove();
+    document.getElementById('korni-admin-tabs-extra')?.remove();
   }
+
 
   function hideAdminBell() {
     for (const btn of document.querySelectorAll('button[title="Новые записи"]')) {
