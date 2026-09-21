@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 951 657" role="img" aria-label="?????: ?????, ???????, ???????? ?????????, 12">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 951 657" role="img" aria-label="Map: Korni, Ivanovo, Step anova lane, 12">
   <rect width="951" height="657" fill="#f3f0ed"/>
   <polygon points="0,0 210,0 295,125 185,315 0,417" fill="#e3e1e2"/>
   <polygon points="610,0 951,0 951,657 655,657 720,455 650,275 720,160" fill="#e4dad4"/>
@@ -9,21 +9,22 @@
   <path d="M0 75 L212 390 L322 657" stroke="#f3d400" stroke-width="4" fill="none"/>
   <path d="M647 0 L548 142 L650 305" stroke="#aeb7c5" stroke-width="18" stroke-linecap="round" fill="none"/>
   <path d="M505 0 L610 170 L515 332" stroke="#fff" stroke-width="20" fill="none"/>
-  <path d="M188 320 L350 410 L515 325" stroke="#fff" stroke-width="16" fill="none"/>
-  <circle cx="472" cy="365" r="32" fill="#7d82ff" opacity=".95"/>
-  <text x="472" y="378" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#fff">?</text>
-  <circle cx="472" cy="402" r="6" fill="#f24b35" stroke="#fff" stroke-width="3"/>
-  <rect x="502" y="330" width="92" height="38" rx="9" fill="#fff" opacity=".95"/>
-  <text x="512" y="348" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#222">????? ? 4,7</text>
-  <text x="512" y="363" font-family="Arial, sans-serif" font-size="12" fill="#666">?? 20:00</text>
-  <text x="55" y="52" transform="rotate(62 55 52)" font-family="Arial" font-size="16" fill="#555">???. ?????????</text>
-  <text x="497" y="188" font-family="Arial" font-size="16" font-weight="700" fill="#0099c8">??? ??????</text>
-  <text x="808" y="116" font-family="Arial" font-size="16" font-weight="700" fill="#008fc0">????????</text>
-  <text x="570" y="424" font-family="Arial" font-size="16" font-weight="700" fill="#0099c8">?????????</text>
-  <text x="450" y="435" font-family="Arial" font-size="16" font-weight="700" fill="#0099c8">?????????</text>
-  <text x="262" y="224" font-family="Arial" font-size="14" fill="#777">???? ?????????</text>
+  <path d="M188 320 L35 505" stroke="#fff" stroke-width="20" fill="none"/>
+  <path d="M360 365 L655 380 L951 385" stroke="#fff" stroke-width="20" fill="none"/>
+  <path d="M420 520 L760 655" stroke="#fff" stroke-width="20" fill="none"/>
+  <circle cx="472" cy="365" r="34" fill="#e5251f"/>
+  <text x="472" y="378" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#fff">&#x042F;</text>
+  <rect x="496" y="318" width="156" height="64" rx="10" fill="#fff" filter="drop-shadow(0 2px 8px rgba(0,0,0,.22))"/>
+  <text x="512" y="343" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#222">&#x041A;&#x043E;&#x0440;&#x043D;&#x0438; &#x2605; 4,7</text>
+  <text x="512" y="363" font-family="Arial, sans-serif" font-size="12" fill="#666">&#x0434;&#x043E; 20:00</text>
+  <text x="55" y="52" transform="rotate(62 55 52)" font-family="Arial" font-size="16" fill="#555">&#x043F;&#x0435;&#x0440;. &#x0421;&#x0442;&#x0435;&#x043F;&#x0430;&#x043D;&#x043E;&#x0432;&#x0430;</text>
+  <text x="497" y="188" font-family="Arial" font-size="16" font-weight="700" fill="#0099c8">&#x0426;&#x0423;&#x041C; &#x041F;&#x043B;&#x0430;&#x0437;&#x0430;</text>
+  <text x="808" y="116" font-family="Arial" font-size="16" font-weight="700" fill="#008fc0">&#x0421;&#x0435;&#x0440;&#x0435;&#x0431;&#x0440;&#x044F;&#x043D;&#x044B;&#x0439;</text>
+  <text x="570" y="424" font-family="Arial" font-size="16" font-weight="700" fill="#0099c8">&#x041A;&#x043E;&#x043D;&#x0434;&#x0438;&#x0442;&#x0435;&#x0440;&#x0441;&#x043A;&#x0430;&#x044F;</text>
+  <text x="450" y="435" font-family="Arial" font-size="16" font-weight="700" fill="#0099c8">&#x041C;&#x0435;&#x0434;&#x0438;&#x0446;&#x0438;&#x043D;&#x0430;</text>
+  <text x="262" y="224" font-family="Arial" font-size="14" fill="#777">&#x043F;&#x0430;&#x0440;&#x043A; &#x0421;&#x0442;&#x0435;&#x043F;&#x0430;&#x043D;&#x043E;&#x0432;&#x0430;</text>
   <text x="676" y="105" font-family="Arial" font-size="16" fill="#777">15</text>
   <text x="826" y="602" font-family="Arial" font-size="16" fill="#777">13</text>
   <text x="520" y="552" font-family="Arial" font-size="16" fill="#777">11</text>
-  <text x="618" y="601" font-family="Arial" font-size="16" font-weight="700" fill="#009b82">?????? ????????</text>
+  <text x="618" y="601" font-family="Arial" font-size="16" font-weight="700" fill="#009b82">&#x0443;&#x043B;&#x0438;&#x0446;&#x0430; &#x0411;&#x043E;&#x043B;&#x044C;&#x0448;&#x0430;&#x044F;</text>
 </svg>
