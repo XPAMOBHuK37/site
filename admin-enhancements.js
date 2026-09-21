@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const SUPABASE_URL = 'https://zsnrjapfmsvkyjeiwxmk.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_apAFjK94Dolcr-8ZXM6ydw_pLeep978';
   const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
