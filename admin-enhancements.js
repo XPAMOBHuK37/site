@@ -64,7 +64,8 @@
       const date_from = w.querySelector('#ev-from').value;
       const date_to = w.querySelector('#ev-to').value;
       const title = w.querySelector('#ev-title').value || 'Событие';
-      if (!file || !date_from || !date_to) return alert('Заполните даты и выберите картинку');
+      if (!file || !file.type.startsWith('image/') || !date_from || !date_to) return alert('Выберите файл изображения и заполните обе даты');
+      if (date_to < date_from) return alert('Дата окончания не может быть раньше даты начала');
       const reader = new FileReader();
       reader.onload = async () => {
         await api('events', { method: 'POST', body: JSON.stringify([{ title, date_from, date_to, image_url: reader.result }]) });
